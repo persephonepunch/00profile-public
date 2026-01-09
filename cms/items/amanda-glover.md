@@ -1,0 +1,21 @@
+---
+f_photo:
+  url: >-
+    https://cdn.prod.website-files.com/69437b612a4e8316713c3947/69464b3c6345b605d9bc664b_6943357e0e9df3122e2cd8ac_amandagloverweb.jpeg
+  alt: null
+f_quote: >-
+  Connecting 'classroom lessons to real-world opportunities' Moore School and
+  USC support and extracurriculars spark first-generation graduate's ambitions
+f_major: Management, Marketing and Real Estate
+f_dashboard-page: https://usc-profiles.webflow.io/items/amanda-glover
+title: Amanda Glover
+slug: amanda-glover
+created-on: '2025-12-18T18:17:54.702Z'
+updated-on: '2025-12-21T01:54:42.189Z'
+published-on: '2025-12-21T01:54:58.140Z'
+f__noSearch: false
+layout: '[items].html'
+tags: items
+---
+
+`Connecting 'classroom lessons to real-world opportunities' Moore School and USC support and extracurriculars spark first-generation graduate's ambitions      Management, marketing and real estate graduate Amanda Glover, '25, has developed an array of skills during her time in the Moore School — skills that leave her open to a myriad of future career opportunities. Before eventually declaring three different majors, Glover says her decision to attend the Moore School was inspired by her move to South Carolina, her long-standing goal to study business and her interest in an education rooted in experience and entrepreneurship.      As a first-generation college student and Rising Scholar, Glover immersed herself deeply in campus life, leadership and service. She discovered the power of community along the way. "The Moore School has taught me the importance of leading with both strategy and empathy," she says. "I've learned that business isn't just about numbers or analysis, it's also about people, communication and adaptability."      Her involvement in the Rising Scholars program became a defining part of her USC experience. The Moore School's Rising Scholars program connects first-generation, low-income and South Carolina-resident Moore School students with scholarships, peer and faculty mentors and a community focused on shared success. As Head of the Philanthropy Committee for Rising Scholars, Glover planned volunteer events and community outreach projects, giving her firsthand experience in team leadership and project coordination.      "Rising Scholars and being a USC Housing resident assistant have given me the chance to create a sense of community and help other students feel supported," she says. "Whether it's through my work as an RA, in Rising Scholars or on campus projects, I've learned that business and teamwork go hand in hand."      Working as the social media lead for USC Parking and Transportation Services also helped Glover combine her marketing skills with campus impact. Glover says she has been able to "create digital content to help students stay informed about parking and transportation on campus."      One of her proudest accomplishments was launching her own advising concept, Advised by Amanda, which allowed her to pair entrepreneurship with mentorship. "Advising Amanda is a project I started through a class assignment and a genuine love for advising," she says. "It offers peer to peer guidance and feedback based on my own experiences navigating the challenges of finding the right support and resources."      Glover also credits faculty members, including Kasie Whitener, management, and Anjelita Cadena, real estate, with shaping her academic direction. Their courses strengthened her interests in leadership, real estate development and strategic thinking. "Both professors have helped me to connect classroom lessons to real-world opportunities," she says. "They have encouraged me to think strategically and stay confident in my ideas."      After graduation, Glover plans to earn her South Carolina Real Estate Broker License and pursue opportunities in marketing and development. She ultimately wants to open an international real estate brokerage firm and a bed and breakfast that blends her passions for hospitality and entrepreneurship. She is also considering enrolling in the Master of Human Resources from the Moore School to further develop her leadership skills. "Longterm, I want to create spaces that bring people together and celebrate community and culture," Glover says.   `

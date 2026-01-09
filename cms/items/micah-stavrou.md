@@ -1,0 +1,22 @@
+---
+f_photo:
+  url: >-
+    https://cdn.prod.website-files.com/69437b612a4e8316713c3947/69464b3ec8e197deeb64d622_694341e8d40f963fbc4a9bc6_stavrou_micah2.jpeg
+  alt: null
+f_quote: >-
+  Learning to strategically manage soldiers MHR candidate says 'transitioning
+  from leading soldiers to leading organizational change felt like a natural
+  next step
+f_major: Master of Human Resources
+f_dashboard-page: https://usc-profiles.webflow.io/items/micah-stavrou
+title: Micah Stavrou
+slug: micah-stavrou
+created-on: '2025-12-18T18:41:25.719Z'
+updated-on: '2025-12-21T01:54:42.219Z'
+published-on: '2025-12-21T01:54:58.140Z'
+f__noSearch: false
+layout: '[items].html'
+tags: items
+---
+
+`Learning to strategically manage soldiers MHR candidate says 'transitioning from leading soldiers to leading organizational change felt like a natural next step'      Master of Human Resources graduate Micah Stavrou, '25, is combining his years of military service with the strategic tools of human resources to lead one of the U.S. Army's largest combat divisions. "Serving over 13 years in the Army taught me that leadership is ultimately about influence, not authority," Stavrou says. "Whether leading a platoon overseas or collaborating on a group project, I've learned the importance of clarity, accountability and mutual respect."      Stavrou says his military experience also reinforced the value of diverse teams. "Diverse teams produce the strongest results, a principle that translates directly to the classroom, where each person's perspective strengthens the outcome," he says.      Stavrou chose the Moore School's MHR program to expand his impact beyond the military. "Throughout my career, I saw firsthand how the right people strategy can make or break an organization's mission," he says. "Transitioning from leading soldiers to leading organizational change felt like a natural next step."      Building on his military experience, Stavrou sought a program to strengthen his HR skills and gain the strategic tools needed to lead organizations effectively. "The Moore School's MHR program stood out for its emphasis on analytics, strategy and global HR leadership," he says. "The professors are world-renowned, and I was able to gain all of the critical skills I wanted to develop to serve beyond the military and continue making an impact through people."      Among his proudest achievements, Stavrou points to the relationships he's built with his fellow MHR candidates and professors during the program. "The Moore School community has been incredibly supportive," he says. "Building those connections has been just as meaningful as any academic achievement."      Stavrou has also been able to bring his military and operational perspective into classroom discussions and consulting projects. "Whether working with IBM, PepsiCo, or other organizations, I've translated my experience into practical insights that have driven measurable business outcomes," Stavrou says.      Two professors, in particular, have shaped his career development. "Professor Patrick Wright had a major influence on how I think about organizational strategy and the role HR plays in driving business performance," he says. Wright's "ability to connect people's decisions to long-term competitive advantage reshaped the way I approach workforce planning and organizational design." "Professor Anthony Nyberg challenged me in a different way. He consistently pushed me to defend my positions, question my assumptions, and articulate why I believe what I believed," he says. "That level of rigor pushed me to grow not just academically but personally and professionally."      Along with being challenged in the MHR program, Stavrou says he also appreciates the support he received at home from his wife, Tabitha Phillips, and daughters Phillips, 11, and Micah-Leigh, 9, while he was enrolled.      Looking ahead, Stavrou plans to leverage his MHR experience to drive organizational impact. With his military foundation and business education, he is poised to lead teams, elevate organizations, and continue making a meaningful difference through people-focused leadership.      Following graduation, Stavrou will return to active duty to lead the Force Integration Division with the 1st Cavalry Division in Fort Hood, Texas. This assignment offers him the opportunity to apply the strategic HR and organizational alignment skills he has developed in the MHR program to one of the Army's largest combat divisions.`

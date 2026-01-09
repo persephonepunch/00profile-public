@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/">
+  <channel>
+    <title>Promotions </title>
+    <description>Promotions  Feed</description>
+    <link></link>
+    <pubDate>Fri, 09 Jan 2026 20:51:14 GMT</pubDate>
+    <atom:link href="/promotions/rss.xml" rel="self" type="application/rss+xml"/>
+        <item>
+            <title>Freshman Gift</title>
+            
+            <link>/promotions/freshman-gift/</link>
+            <pubDate>Fri, 09 Jan 2026 20:51:14 GMT</pubDate>
+            <guid>/promotions/freshman-gift/</guid>
+            
+            <content type="html"></content>
+            
+        </item>
+  </channel>
+</rss>

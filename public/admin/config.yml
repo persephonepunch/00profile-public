@@ -1,0 +1,1981 @@
+backend:
+  name: git-gateway
+  accept_roles:
+    - admin
+    - editor
+  branch: master
+media_folder: theme/assets/images
+public_folder: /assets/images
+collections:
+  - name: pages
+    label: Pages
+    identifier_field: title
+    extension: md
+    create: false
+    delete: false
+    slug: '{{slug}}'
+    editor:
+      preview: false
+    folder: cms/pages
+    fields:
+      - label: Title
+        name: title
+        widget: string
+      - label: Publish Date
+        name: date
+        widget: datetime
+      - label: Layout
+        widget: hidden
+        name: layout
+        default: '{{slug}}.html'
+      - &ref_0
+        label: Seo
+        name: seo
+        widget: object
+        collapsed: true
+        fields:
+          - label: Title
+            name: title
+            widget: string
+            required: false
+          - label: Description
+            name: description
+            widget: string
+            required: false
+          - label: No index
+            name: noindex
+            widget: boolean
+            default: false
+            required: false
+          - label: Open Graph Title
+            name: og:title
+            widget: string
+            required: false
+          - label: Open Graph Image
+            name: og:image
+            widget: image
+            required: false
+            media_library:
+              config:
+                multiple: false
+          - label: Twitter Title
+            name: twitter:title
+            widget: string
+            default: summary
+            required: false
+          - label: Twitter Card
+            name: twitter:card
+            widget: string
+            default: summary
+            required: false
+          - label: Twitter Site
+            name: twitter:site
+            widget: string
+            required: false
+          - label: Twitter Creator
+            name: twitter:creator
+            widget: string
+            required: false
+          - label: Twitter Image
+            name: twitter:image
+            widget: image
+            required: false
+            media_library:
+              config:
+                multiple: false
+          - label: Additional HTML tags
+            name: additional_tags
+            widget: text
+            required: false
+  - name: playlists
+    label: Playlists
+    folder: cms/playlists
+    create: true
+    identifier_field: name
+    extension: md
+    slug: '{{slug}}'
+    fields:
+      - hint: ''
+        name: title
+        label: Name
+        widget: string
+        required: true
+      - hint: ''
+        name: created-on
+        label: Created On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: updated-on
+        label: Updated On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: published-on
+        label: Published On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: f__noSearch
+        label: No Search
+        widget: boolean
+        required: false
+        default: false
+      - label: Tags
+        widget: hidden
+        name: tags
+        default: playlists
+      - label: Layout
+        widget: hidden
+        name: layout
+        default: '[playlists].html'
+      - label: Publish Date
+        name: date
+        widget: datetime
+      - *ref_0
+  - name: privacy_settings
+    label: Privacy Settings
+    folder: cms/privacy-settings
+    create: true
+    identifier_field: name
+    extension: md
+    slug: '{{slug}}'
+    fields:
+      - hint: ''
+        name: title
+        label: Name
+        widget: string
+        required: true
+      - hint: ''
+        name: created-on
+        label: Created On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: updated-on
+        label: Updated On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: published-on
+        label: Published On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: f__noSearch
+        label: No Search
+        widget: boolean
+        required: false
+        default: false
+      - label: Tags
+        widget: hidden
+        name: tags
+        default: privacy-settings
+      - label: Layout
+        widget: hidden
+        name: layout
+        default: '[privacy-settings].html'
+      - label: Publish Date
+        name: date
+        widget: datetime
+      - *ref_0
+  - name: payments
+    label: Payments
+    folder: cms/payments
+    create: true
+    identifier_field: name
+    extension: md
+    slug: '{{slug}}'
+    fields:
+      - hint: ''
+        name: title
+        label: Name
+        widget: string
+        required: true
+      - hint: ''
+        name: created-on
+        label: Created On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: updated-on
+        label: Updated On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: published-on
+        label: Published On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: f__noSearch
+        label: No Search
+        widget: boolean
+        required: false
+        default: false
+      - label: Tags
+        widget: hidden
+        name: tags
+        default: payments
+      - label: Layout
+        widget: hidden
+        name: layout
+        default: '[payments].html'
+      - label: Publish Date
+        name: date
+        widget: datetime
+      - *ref_0
+  - name: loans
+    label: Loans
+    folder: cms/loans
+    create: true
+    identifier_field: name
+    extension: md
+    slug: '{{slug}}'
+    fields:
+      - hint: ''
+        name: title
+        label: Name
+        widget: string
+        required: true
+      - hint: ''
+        name: created-on
+        label: Created On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: updated-on
+        label: Updated On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: published-on
+        label: Published On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: f__noSearch
+        label: No Search
+        widget: boolean
+        required: false
+        default: false
+      - label: Tags
+        widget: hidden
+        name: tags
+        default: loans
+      - label: Layout
+        widget: hidden
+        name: layout
+        default: '[loans].html'
+      - label: Publish Date
+        name: date
+        widget: datetime
+      - *ref_0
+  - name: family_relationships
+    label: Family Relationships
+    folder: cms/family-relationships
+    create: true
+    identifier_field: name
+    extension: md
+    slug: '{{slug}}'
+    fields:
+      - hint: ''
+        name: title
+        label: Name
+        widget: string
+        required: true
+      - hint: ''
+        name: created-on
+        label: Created On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: updated-on
+        label: Updated On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: published-on
+        label: Published On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: f__noSearch
+        label: No Search
+        widget: boolean
+        required: false
+        default: false
+      - label: Tags
+        widget: hidden
+        name: tags
+        default: family-relationships
+      - label: Layout
+        widget: hidden
+        name: layout
+        default: '[family-relationships].html'
+      - label: Publish Date
+        name: date
+        widget: datetime
+      - *ref_0
+  - name: invites
+    label: Invites
+    folder: cms/invites
+    create: true
+    identifier_field: name
+    extension: md
+    slug: '{{slug}}'
+    fields:
+      - hint: ''
+        name: title
+        label: Name
+        widget: string
+        required: true
+      - hint: ''
+        name: created-on
+        label: Created On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: updated-on
+        label: Updated On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: published-on
+        label: Published On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: f__noSearch
+        label: No Search
+        widget: boolean
+        required: false
+        default: false
+      - label: Tags
+        widget: hidden
+        name: tags
+        default: invites
+      - label: Layout
+        widget: hidden
+        name: layout
+        default: '[invites].html'
+      - label: Publish Date
+        name: date
+        widget: datetime
+      - *ref_0
+  - name: passwords
+    label: Passwords
+    folder: cms/passwords
+    create: true
+    identifier_field: name
+    extension: md
+    slug: '{{slug}}'
+    fields:
+      - hint: ''
+        name: title
+        label: Name
+        widget: string
+        required: true
+      - hint: ''
+        name: created-on
+        label: Created On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: updated-on
+        label: Updated On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: published-on
+        label: Published On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: f__noSearch
+        label: No Search
+        widget: boolean
+        required: false
+        default: false
+      - label: Tags
+        widget: hidden
+        name: tags
+        default: passwords
+      - label: Layout
+        widget: hidden
+        name: layout
+        default: '[passwords].html'
+      - label: Publish Date
+        name: date
+        widget: datetime
+      - *ref_0
+  - name: users
+    label: Users
+    folder: cms/users
+    create: true
+    identifier_field: name
+    extension: md
+    slug: '{{slug}}'
+    fields:
+      - hint: ''
+        name: title
+        label: Name
+        widget: string
+        required: true
+      - hint: ''
+        name: created-on
+        label: Created On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: updated-on
+        label: Updated On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: published-on
+        label: Published On
+        widget: datetime
+        required: false
+      - label: bio
+        name: body
+        widget: markdown
+        required: false
+      - hint: ''
+        name: f_email
+        label: email
+        widget: string
+        required: false
+      - hint: ''
+        name: f_xano-user-id
+        label: xano-user-id
+        widget: string
+        required: false
+      - hint: ''
+        name: f_role
+        label: role
+        widget: string
+        required: false
+      - hint: ''
+        name: f__noSearch
+        label: No Search
+        widget: boolean
+        required: false
+        default: false
+      - label: Tags
+        widget: hidden
+        name: tags
+        default: users
+      - label: Layout
+        widget: hidden
+        name: layout
+        default: '[users].html'
+      - label: Publish Date
+        name: date
+        widget: datetime
+      - *ref_0
+  - name: support_cards
+    label: Support Cards
+    folder: cms/support-cards
+    create: true
+    identifier_field: name
+    extension: md
+    slug: '{{slug}}'
+    fields:
+      - hint: ''
+        name: title
+        label: Name
+        widget: string
+        required: true
+      - hint: ''
+        name: created-on
+        label: Created On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: updated-on
+        label: Updated On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: published-on
+        label: Published On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: f__noSearch
+        label: No Search
+        widget: boolean
+        required: false
+        default: false
+      - label: Tags
+        widget: hidden
+        name: tags
+        default: support-cards
+      - label: Layout
+        widget: hidden
+        name: layout
+        default: '[support-cards].html'
+      - label: Publish Date
+        name: date
+        widget: datetime
+      - *ref_0
+  - name: endowment_group
+    label: Endowment Groups
+    folder: cms/endowment-group
+    create: true
+    identifier_field: name
+    extension: md
+    slug: '{{slug}}'
+    fields:
+      - hint: ''
+        name: title
+        label: Name
+        widget: string
+        required: true
+      - hint: ''
+        name: created-on
+        label: Created On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: updated-on
+        label: Updated On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: published-on
+        label: Published On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: f__noSearch
+        label: No Search
+        widget: boolean
+        required: false
+        default: false
+      - label: Tags
+        widget: hidden
+        name: tags
+        default: endowment-group
+      - label: Layout
+        widget: hidden
+        name: layout
+        default: '[endowment-group].html'
+      - label: Publish Date
+        name: date
+        widget: datetime
+      - *ref_0
+  - name: majors
+    label: Majors
+    folder: cms/majors
+    create: true
+    identifier_field: name
+    extension: md
+    slug: '{{slug}}'
+    fields:
+      - hint: ''
+        name: title
+        label: Name
+        widget: string
+        required: true
+      - hint: ''
+        name: created-on
+        label: Created On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: updated-on
+        label: Updated On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: published-on
+        label: Published On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: f__noSearch
+        label: No Search
+        widget: boolean
+        required: false
+        default: false
+      - label: Tags
+        widget: hidden
+        name: tags
+        default: majors
+      - label: Layout
+        widget: hidden
+        name: layout
+        default: '[majors].html'
+      - label: Publish Date
+        name: date
+        widget: datetime
+      - *ref_0
+  - name: classes
+    label: Classes
+    folder: cms/classes
+    create: true
+    identifier_field: name
+    extension: md
+    slug: '{{slug}}'
+    fields:
+      - hint: ''
+        name: title
+        label: Name
+        widget: string
+        required: true
+      - hint: ''
+        name: created-on
+        label: Created On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: updated-on
+        label: Updated On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: published-on
+        label: Published On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: f__noSearch
+        label: No Search
+        widget: boolean
+        required: false
+        default: false
+      - label: Tags
+        widget: hidden
+        name: tags
+        default: classes
+      - label: Layout
+        widget: hidden
+        name: layout
+        default: '[classes].html'
+      - label: Publish Date
+        name: date
+        widget: datetime
+      - *ref_0
+  - name: instructors
+    label: Instructors
+    folder: cms/instructors
+    create: true
+    identifier_field: name
+    extension: md
+    slug: '{{slug}}'
+    fields:
+      - hint: ''
+        name: title
+        label: Name
+        widget: string
+        required: true
+      - hint: ''
+        name: created-on
+        label: Created On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: updated-on
+        label: Updated On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: published-on
+        label: Published On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: f__noSearch
+        label: No Search
+        widget: boolean
+        required: false
+        default: false
+      - label: Tags
+        widget: hidden
+        name: tags
+        default: instructors
+      - label: Layout
+        widget: hidden
+        name: layout
+        default: '[instructors].html'
+      - label: Publish Date
+        name: date
+        widget: datetime
+      - *ref_0
+  - name: tags
+    label: Tags
+    folder: cms/tags
+    create: true
+    identifier_field: name
+    extension: md
+    slug: '{{slug}}'
+    fields:
+      - hint: ''
+        name: title
+        label: Name
+        widget: string
+        required: true
+      - hint: ''
+        name: created-on
+        label: Created On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: updated-on
+        label: Updated On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: published-on
+        label: Published On
+        widget: datetime
+        required: false
+      - label: Button Fields
+        name: body
+        widget: markdown
+        required: false
+      - hint: ''
+        name: f_link-1
+        label: Link 1
+        widget: string
+        required: false
+      - hint: ''
+        name: f_unique-id
+        label: Unique ID
+        widget: string
+        required: false
+      - hint: ''
+        name: f__noSearch
+        label: No Search
+        widget: boolean
+        required: false
+        default: false
+      - label: Tags
+        widget: hidden
+        name: tags
+        default: tags
+      - label: Layout
+        widget: hidden
+        name: layout
+        default: '[tags].html'
+      - label: Publish Date
+        name: date
+        widget: datetime
+      - *ref_0
+  - name: menus
+    label: Menus
+    folder: cms/menus
+    create: true
+    identifier_field: name
+    extension: md
+    slug: '{{slug}}'
+    fields:
+      - hint: ''
+        name: title
+        label: Name
+        widget: string
+        required: true
+      - hint: ''
+        name: created-on
+        label: Created On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: updated-on
+        label: Updated On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: published-on
+        label: Published On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: f_link
+        label: Link
+        widget: string
+        required: false
+      - hint: ''
+        name: f_sort
+        label: Sort
+        widget: number
+        required: false
+      - hint: ''
+        name: f_publish
+        label: Publish
+        widget: boolean
+        required: false
+        default: false
+      - hint: ''
+        name: f__noSearch
+        label: No Search
+        widget: boolean
+        required: false
+        default: false
+      - label: Tags
+        widget: hidden
+        name: tags
+        default: menus
+      - label: Layout
+        widget: hidden
+        name: layout
+        default: '[menus].html'
+      - label: Publish Date
+        name: date
+        widget: datetime
+      - *ref_0
+  - name: promotions
+    label: Promotions
+    folder: cms/promotions
+    create: true
+    identifier_field: name
+    extension: md
+    slug: '{{slug}}'
+    fields:
+      - hint: ''
+        name: title
+        label: Name
+        widget: string
+        required: true
+      - hint: ''
+        name: created-on
+        label: Created On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: updated-on
+        label: Updated On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: published-on
+        label: Published On
+        widget: datetime
+        required: false
+      - label: Promotion Embed
+        name: body
+        widget: markdown
+        required: false
+      - hint: ''
+        name: f_sub-title
+        label: Sub Title
+        widget: string
+        required: false
+      - hint: ''
+        name: f_promotion-image
+        label: Promotion Image
+        widget: object
+        required: false
+        fields:
+          - hint: ''
+            name: url
+            label: Image
+            widget: image
+            required: false
+            allow_multiple: false
+          - hint: Image Alt
+            name: alt
+            label: alt
+            widget: string
+            required: false
+      - hint: ''
+        name: f_author-name
+        label: Author Name
+        widget: string
+        required: false
+      - hint: ''
+        name: f_author-stripe-id
+        label: Author Stripe ID
+        widget: string
+        required: false
+      - hint: ''
+        name: f_button-data
+        label: Button Data
+        widget: string
+        required: false
+      - hint: ''
+        name: f_button-title
+        label: Button Title
+        widget: string
+        required: false
+      - hint: ''
+        name: f__noSearch
+        label: No Search
+        widget: boolean
+        required: false
+        default: false
+      - label: Tags
+        widget: hidden
+        name: tags
+        default: promotions
+      - label: Layout
+        widget: hidden
+        name: layout
+        default: '[promotions].html'
+      - label: Publish Date
+        name: date
+        widget: datetime
+      - *ref_0
+  - name: stories
+    label: Stories
+    folder: cms/stories
+    create: true
+    identifier_field: name
+    extension: md
+    slug: '{{slug}}'
+    fields:
+      - hint: ''
+        name: title
+        label: Name
+        widget: string
+        required: true
+      - hint: ''
+        name: created-on
+        label: Created On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: updated-on
+        label: Updated On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: published-on
+        label: Published On
+        widget: datetime
+        required: false
+      - label: Story Content
+        name: body
+        widget: markdown
+        required: false
+      - hint: ''
+        name: f_excerpt
+        label: Excerpt
+        widget: string
+        required: false
+      - hint: ''
+        name: f_featured-image
+        label: Featured Image
+        widget: object
+        required: false
+        fields:
+          - hint: ''
+            name: url
+            label: Image
+            widget: image
+            required: false
+            allow_multiple: false
+          - hint: Image Alt
+            name: alt
+            label: alt
+            widget: string
+            required: false
+      - hint: ''
+        name: f_author-name
+        label: Author Name
+        widget: string
+        required: false
+      - hint: ''
+        name: f_author-image
+        label: Author Image
+        widget: object
+        required: false
+        fields:
+          - hint: ''
+            name: url
+            label: Image
+            widget: image
+            required: false
+            allow_multiple: false
+          - hint: Image Alt
+            name: alt
+            label: alt
+            widget: string
+            required: false
+      - hint: ''
+        name: f_category
+        label: Category
+        widget: select
+        required: false
+        options:
+          - label: opinion
+            value: opinion
+          - label: news
+            value: news
+          - label: feature
+            value: feature
+          - label: review
+            value: review
+          - label: campus
+            value: campus
+          - label: sports
+            value: sports
+          - label: curriculum
+            value: curriculum
+          - label: other
+            value: other
+      - hint: ''
+        name: f_read-time
+        label: Read Time
+        widget: number
+        required: false
+      - hint: ''
+        name: f_published-date
+        label: Published Date
+        widget: datetime
+        required: false
+      - hint: ''
+        name: f_xano-id
+        label: Xano ID
+        widget: string
+        required: false
+      - hint: ''
+        name: f_sort-2
+        label: Sort
+        widget: number
+        required: false
+      - hint: ''
+        name: f_unique-user-id
+        label: Unique User ID
+        widget: string
+        required: false
+      - hint: ''
+        name: f__noSearch
+        label: No Search
+        widget: boolean
+        required: false
+        default: false
+      - label: Tags
+        widget: hidden
+        name: tags
+        default: stories
+      - label: Layout
+        widget: hidden
+        name: layout
+        default: '[stories].html'
+      - label: Publish Date
+        name: date
+        widget: datetime
+      - *ref_0
+  - name: items
+    label: Profiles
+    folder: cms/items
+    create: true
+    identifier_field: name
+    extension: md
+    slug: '{{slug}}'
+    fields:
+      - hint: ''
+        name: title
+        label: Title
+        widget: string
+        required: true
+      - hint: ''
+        name: created-on
+        label: Created On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: updated-on
+        label: Updated On
+        widget: datetime
+        required: false
+      - hint: ''
+        name: published-on
+        label: Published On
+        widget: datetime
+        required: false
+      - label: story
+        name: body
+        widget: markdown
+        required: false
+      - hint: ''
+        name: f_photo
+        label: Photo
+        widget: object
+        required: true
+        fields:
+          - hint: ''
+            name: url
+            label: Image
+            widget: image
+            required: true
+            allow_multiple: false
+          - hint: Image Alt
+            name: alt
+            label: alt
+            widget: string
+            required: false
+      - hint: ''
+        name: f_quote
+        label: Description
+        widget: string
+        required: true
+      - hint: ''
+        name: f_major
+        label: Major
+        widget: string
+        required: false
+      - hint: ''
+        name: f_dashboard-page
+        label: Dashboard Page
+        widget: string
+        required: false
+      - hint: ''
+        name: f_unique-id
+        label: Unique ID
+        widget: string
+        required: false
+      - hint: ''
+        name: f_sort-number
+        label: Sort Number
+        widget: number
+        required: false
+      - hint: ''
+        name: f__noSearch
+        label: No Search
+        widget: boolean
+        required: false
+        default: false
+      - label: Tags
+        widget: hidden
+        name: tags
+        default: items
+      - label: Layout
+        widget: hidden
+        name: layout
+        default: '[items].html'
+      - label: Publish Date
+        name: date
+        widget: datetime
+      - *ref_0
+  - label: Theme Settings
+    name: settings
+    identifier_field: title
+    extension: json
+    create: false
+    delete: false
+    slug: '{{slug}}'
+    editor:
+      preview: false
+    files:
+      - label: General
+        name: site
+        file: cms/_data/settings/site.json
+        fields:
+          - label: Title
+            name: title
+            widget: hidden
+            default: General
+          - hint: Full domain url (needed for a correct sitemap file)
+            name: domain
+            label: Domain
+            widget: string
+            required: false
+          - name: favicon
+            label: Favicon
+            widget: image
+            allow_multiple: false
+            required: false
+          - name: apple_touch_icon
+            label: Apple Touch Icon
+            widget: image
+            allow_multiple: false
+            required: false
+          - name: header_additional_content
+            label: Additional Content Header
+            hint: Content here will be placed before </head> tag
+            widget: text
+            required: false
+          - name: footer_additional_content
+            label: Additional Content Footer
+            hint: Content here will be placed before </body> tag
+            widget: text
+            required: false
+          - name: images_optimization
+            label: Images Optimization
+            widget: object
+            collapsed: false
+            fields:
+              - label: Image Formats
+                name: formats
+                widget: select
+                multiple: true
+                options:
+                  - label: Avif
+                    value: avif
+                  - label: Webp
+                    value: webp
+              - label: Image Dimensions
+                name: dimensions
+                widget: select
+                multiple: true
+                options:
+                  - label: '500'
+                    value: 500
+                  - label: '800'
+                    value: 800
+                  - label: '1080'
+                    value: 1080
+                  - label: '1600'
+                    value: 1600
+                  - label: '2000'
+                    value: 2000
+                  - label: '2600'
+                    value: 2600
+      - label: Colors
+        name: colors
+        file: cms/_data/colors.json
+        fields:
+          - label: Title
+            name: title
+            widget: hidden
+            default: Colors
+      - label: Texts
+        name: texts
+        file: cms/_data/texts.json
+        fields:
+          - label: Title
+            name: title
+            widget: hidden
+            default: Texts
+          - hint: 'Original text: Close Modal, key: 148b4a45'
+            label: Text
+            name: 148b4a45
+            widget: string
+          - hint: 'Original text: Login, key: 462ff49'
+            label: Text
+            name: 462ff49
+            widget: string
+          - hint: 'Original text: Your Story, key: 7b0776c8'
+            label: Text
+            name: 7b0776c8
+            widget: string
+          - hint: 'Original text: Profiles, key: -37e2eff6'
+            label: Text
+            name: '-37e2eff6'
+            widget: string
+          - hint: 'Original text: Donate, key: 7a59368f'
+            label: Text
+            name: 7a59368f
+            widget: string
+          - hint: 'Original text: Apply, key: 3c8934e'
+            label: Text
+            name: 3c8934e
+            widget: string
+          - hint: 'Original text: No items found., key: 3d503d2b'
+            label: Text
+            name: 3d503d2b
+            widget: string
+          - hint: 'Original text: subhead here, key: -b171810'
+            label: Text
+            name: '-b171810'
+            widget: string
+          - hint: 'Original text: University of, key: 69f71889'
+            label: Text
+            name: 69f71889
+            widget: string
+          - hint: 'Original text: South Carolina, key: 6bf022be'
+            label: Text
+            name: 6bf022be
+            widget: string
+          - hint: 'Original text: Hello, key: 42628b2'
+            label: Text
+            name: 42628b2
+            widget: string
+          - hint: >-
+              Original text: "Learn as if you were to live forever.", key:
+              39e45e41
+            label: Text
+            name: 39e45e41
+            widget: string
+          - hint: 'Original text: Heading 1, key: 6af22973'
+            label: Text
+            name: 6af22973
+            widget: string
+          - hint: 'Original text: Heading 2, key: 6af22974'
+            label: Text
+            name: 6af22974
+            widget: string
+          - hint: 'Original text: Heading 3, key: 6af22975'
+            label: Text
+            name: 6af22975
+            widget: string
+          - hint: 'Original text: Heading 4, key: 6af22976'
+            label: Text
+            name: 6af22976
+            widget: string
+          - hint: 'Original text: Heading 5, key: 6af22977'
+            label: Text
+            name: 6af22977
+            widget: string
+          - hint: 'Original text: Heading 6, key: 6af22978'
+            label: Text
+            name: 6af22978
+            widget: string
+          - hint: >-
+              Original text: Lorem ipsum dolor sit amet, consectetur adipiscing
+              elit, sed do eiusmod tempor incididunt ut labore et dolore magna
+              aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco
+              laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
+              dolor in reprehenderit in voluptate velit esse cillum dolore eu
+              fugiat nulla pariatur., key: 36f186d6
+            label: Text
+            name: 36f186d6
+            widget: text
+          - hint: 'Original text: Block quote, key: 40f76109'
+            label: Text
+            name: 40f76109
+            widget: string
+          - hint: 'Original text: Ordered list, key: 670f3891'
+            label: Text
+            name: 670f3891
+            widget: string
+          - hint: 'Original text: Item 1, key: -7cdc0d7c'
+            label: Text
+            name: '-7cdc0d7c'
+            widget: string
+          - hint: 'Original text: Item 2, key: -7cdc0d7b'
+            label: Text
+            name: '-7cdc0d7b'
+            widget: string
+          - hint: 'Original text: Item 3, key: -7cdc0d7a'
+            label: Text
+            name: '-7cdc0d7a'
+            widget: string
+          - hint: 'Original text: Unordered list, key: -27cb5e56'
+            label: Text
+            name: '-27cb5e56'
+            widget: string
+          - hint: 'Original text: Item A, key: -7cdc0d6c'
+            label: Text
+            name: '-7cdc0d6c'
+            widget: string
+          - hint: 'Original text: Item B, key: -7cdc0d6b'
+            label: Text
+            name: '-7cdc0d6b'
+            widget: string
+          - hint: 'Original text: Item C, key: -7cdc0d6a'
+            label: Text
+            name: '-7cdc0d6a'
+            widget: string
+          - hint: 'Original text: Text link, key: 361eaeed'
+            label: Text
+            name: 361eaeed
+            widget: string
+          - hint: 'Original text: Bold text, key: 4205e5c8'
+            label: Text
+            name: 4205e5c8
+            widget: string
+          - hint: 'Original text: Emphasis, key: 4abe799c'
+            label: Text
+            name: 4abe799c
+            widget: string
+          - hint: 'Original text: Superscript, key: 1dea1fe6'
+            label: Text
+            name: 1dea1fe6
+            widget: string
+          - hint: 'Original text: Subscript, key: -69de0115'
+            label: Text
+            name: '-69de0115'
+            widget: string
+          - hint: 'Original text: Mahatma, key: -6b52b3c5'
+            label: Text
+            name: '-6b52b3c5'
+            widget: string
+          - hint: 'Original text: Colgate Welcome Gift, key: 4aa61b43'
+            label: Text
+            name: 4aa61b43
+            widget: string
+          - hint: 'Original text: Claim the Offer, key: -3f7b7137'
+            label: Text
+            name: '-3f7b7137'
+            widget: string
+          - hint: >-
+              Original text: “A belief is like a guillotine, just as heavy, just
+              as light.”, key: 15394694
+            label: Text
+            name: '15394694'
+            widget: string
+          - hint: 'Original text: Franz , key: 7de776bf'
+            label: Text
+            name: 7de776bf
+            widget: string
+          - hint: 'Original text: “Half the Sky”, key: 58c0101c'
+            label: Text
+            name: 58c0101c
+            widget: string
+          - hint: 'Original text: Mao, key: 12d3b'
+            label: Text
+            name: 12d3b
+            widget: string
+          - hint: >-
+              Original text: “No one can construct for you the bridge upon which
+              precisely you must cross the stream of life, no one but you
+              yourself alone.”, key: -64d3b955
+            label: Text
+            name: '-64d3b955'
+            widget: text
+          - hint: 'Original text: Frederich, key: 5c3b0316'
+            label: Text
+            name: 5c3b0316
+            widget: string
+          - hint: >-
+              Original text: “All animals are equal, but some animals are more
+              equal than others.”, key: 2672cfe4
+            label: Text
+            name: 2672cfe4
+            widget: string
+          - hint: 'Original text: George, key: 7eeb87ff'
+            label: Text
+            name: 7eeb87ff
+            widget: string
+          - hint: 'Original text: “I dwell in possibility…”, key: -1cb07d10'
+            label: Text
+            name: '-1cb07d10'
+            widget: string
+          - hint: 'Original text: Emily, key: 3ff79ee'
+            label: Text
+            name: 3ff79ee
+            widget: string
+          - hint: >-
+              Original text: “Atticus told me to delete the adjectives and I'd
+              have the facts.”, key: -42cf24b5
+            label: Text
+            name: '-42cf24b5'
+            widget: string
+          - hint: 'Original text: Harper Lee, key: -3ba9430'
+            label: Text
+            name: '-3ba9430'
+            widget: string
+          - hint: 'Original text: Navigation, key: -1a2819cc'
+            label: Text
+            name: '-1a2819cc'
+            widget: string
+          - hint: >-
+              Original text: The footer marks the end of the scroll, but not the
+              end of the story., key: -25a4a444
+            label: Text
+            name: '-25a4a444'
+            widget: string
+          - hint: 'Original text: ( Concept ), key: f16b659'
+            label: Text
+            name: f16b659
+            widget: string
+          - hint: >-
+              Original text: Parallax adds a sense of depth and motion that
+              feels natural to the human eye. By shifting elements at different
+              speeds, we create a layered world that reacts to scroll. It’s
+              subtle, but powerful — turning static sections into dynamic
+              experiences., key: -5573b900
+            label: Text
+            name: '-5573b900'
+            widget: text
+          - hint: 'Original text: Scroll down ↓, key: 357b8a28'
+            label: Text
+            name: 357b8a28
+            widget: string
+          - hint: 'Original text: ( Pages ), key: 5a2a9eb5'
+            label: Text
+            name: 5a2a9eb5
+            widget: string
+          - hint: 'Original text: Home, key: 2268ff'
+            label: Text
+            name: 2268ff
+            widget: string
+          - hint: 'Original text: Resources, key: 13ede05'
+            label: Text
+            name: 13ede05
+            widget: string
+          - hint: 'Original text: About, key: 3c2336d'
+            label: Text
+            name: 3c2336d
+            widget: string
+          - hint: 'Original text: Platform, key: 7397cc93'
+            label: Text
+            name: 7397cc93
+            widget: string
+          - hint: 'Original text: ( Socials ), key: 177bfb17'
+            label: Text
+            name: 177bfb17
+            widget: string
+          - hint: 'Original text: LinkedIn, key: 4b0ff13e'
+            label: Text
+            name: 4b0ff13e
+            widget: string
+          - hint: 'Original text: Instagram, key: 792b2792'
+            label: Text
+            name: 792b2792
+            widget: string
+          - hint: 'Original text: X/Twitter, key: 3677a79c'
+            label: Text
+            name: 3677a79c
+            widget: string
+          - hint: 'Original text: ( Contact ), key: 2bdad211'
+            label: Text
+            name: 2bdad211
+            widget: string
+          - hint: 'Original text: hello@email, key: -5f73d952'
+            label: Text
+            name: '-5f73d952'
+            widget: string
+          - hint: 'Original text: Not your typical platform, key: -45ac629d'
+            label: Text
+            name: '-45ac629d'
+            widget: string
+          - hint: 'Original text: register, key: -2923d15d'
+            label: Text
+            name: '-2923d15d'
+            widget: string
+          - hint: 'Original text: FIRST NAME, key: 119ca21b'
+            label: Text
+            name: 119ca21b
+            widget: string
+          - hint: 'Original text: LAST NAME, key: 1c6105d5'
+            label: Text
+            name: 1c6105d5
+            widget: string
+          - hint: 'Original text: password, key: 4889ba9b'
+            label: Text
+            name: 4889ba9b
+            widget: string
+          - hint: 'Original text: EMAIL, key: 3f0537c'
+            label: Text
+            name: 3f0537c
+            widget: string
+          - hint: "Original text: Already Registered? \_Login, key: -5a4b1ccc"
+            label: Text
+            name: '-5a4b1ccc'
+            widget: string
+          - hint: >-
+              Original text: Thank you! Your submission has been received!, key:
+              5a0ea5a1
+            label: Text
+            name: 5a0ea5a1
+            widget: string
+          - hint: >-
+              Original text: Oops! Something went wrong while submitting the
+              form., key: -7c112e99
+            label: Text
+            name: '-7c112e99'
+            widget: string
+          - hint: 'Original text: submit your story, key: -27cddc30'
+            label: Text
+            name: '-27cddc30'
+            widget: string
+          - hint: 'Original text: name, key: 337a8b'
+            label: Text
+            name: 337a8b
+            widget: string
+          - hint: 'Original text: email, key: 5c24b9c'
+            label: Text
+            name: 5c24b9c
+            widget: string
+          - hint: 'Original text: story summary, key: -65028885'
+            label: Text
+            name: '-65028885'
+            widget: string
+          - hint: 'Original text: tags, key: 363419'
+            label: Text
+            name: '363419'
+            widget: string
+          - hint: 'Original text: permission to publish, key: -27b638a5'
+            label: Text
+            name: '-27b638a5'
+            widget: string
+          - hint: >-
+              Original text: I agree to Privacy Link and Terms of Use, key:
+              70b87474
+            label: Text
+            name: 70b87474
+            widget: string
+          - hint: 'Original text: edit your story, key: -5f00d562'
+            label: Text
+            name: '-5f00d562'
+            widget: string
+          - hint: 'Original text: let''s go, key: 7a20d721'
+            label: Text
+            name: 7a20d721
+            widget: string
+          - hint: 'Original text: Contact us, key: 7f274abe'
+            label: Text
+            name: 7f274abe
+            widget: string
+          - hint: 'Original text: upload documents, key: -ee548a7'
+            label: Text
+            name: '-ee548a7'
+            widget: string
+          - hint: 'Original text: show, key: 35dafd'
+            label: Text
+            name: 35dafd
+            widget: string
+          - hint: 'Original text: I agree to terms, key: 6dad9f4d'
+            label: Text
+            name: 6dad9f4d
+            widget: string
+          - hint: 'Original text: Reset Password, key: 2bfd368c'
+            label: Text
+            name: 2bfd368c
+            widget: string
+          - hint: 'Original text: Welcome Back, key: -e10db'
+            label: Text
+            name: '-e10db'
+            widget: string
+          - hint: 'Original text: Please Login, key: -751e9c4d'
+            label: Text
+            name: '-751e9c4d'
+            widget: string
+          - hint: 'Original text: @2026 University of South Carolina, key: 5d62a953'
+            label: Text
+            name: 5d62a953
+            widget: string
+      - label: Links
+        name: links
+        file: cms/_data/links.json
+        fields:
+          - label: Title
+            name: title
+            widget: hidden
+            default: Links
+          - hint: 'Original link: #, key: 23'
+            label: Link
+            name: '23'
+            widget: string
+          - hint: 'Original link: /, key: 2f'
+            label: Link
+            name: 2f
+            widget: string
+          - hint: 'Original link: /login/, key: 74dcded5'
+            label: Link
+            name: 74dcded5
+            widget: string
+          - hint: 'Original link: /stories/, key: -6113f495'
+            label: Link
+            name: '-6113f495'
+            widget: string
+          - hint: 'Original link: /profiles/, key: -627169ca'
+            label: Link
+            name: '-627169ca'
+            widget: string
+          - hint: >-
+              Original link:
+              https://university.webflow.com/lesson/add-and-nest-text-links-in-webflow,
+              key: -1a691619
+            label: Link
+            name: '-1a691619'
+            widget: string
+          - hint: 'Original link: mailto:marthahagenblack@gmail.com, key: 295a5d70'
+            label: Link
+            name: 295a5d70
+            widget: string
+      - label: Images
+        name: images
+        file: cms/_data/images.json
+        fields:
+          - label: Title
+            name: title
+            widget: hidden
+            default: Images
+          - label: Image
+            name: i5f5e633f
+            widget: object
+            fields:
+              - name: url
+                label: Image Url
+                widget: image
+                allow_multiple: false
+                required: false
+              - name: alt
+                label: Image Alt
+                widget: string
+                required: false
+          - label: Image
+            name: '-43965085'
+            widget: object
+            fields:
+              - name: url
+                label: Image Url
+                widget: image
+                allow_multiple: false
+                required: false
+              - name: alt
+                label: Image Alt
+                widget: string
+                required: false
+          - label: Image
+            name: 20cedaf8
+            widget: object
+            fields:
+              - name: url
+                label: Image Url
+                widget: image
+                allow_multiple: false
+                required: false
+              - name: alt
+                label: Image Alt
+                widget: string
+                required: false
+          - label: Image
+            name: 73cf2e35
+            widget: object
+            fields:
+              - name: url
+                label: Image Url
+                widget: image
+                allow_multiple: false
+                required: false
+              - name: alt
+                label: Image Alt
+                widget: string
+                required: false
+          - label: Image
+            name: 69ae6d49
+            widget: object
+            fields:
+              - name: url
+                label: Image Url
+                widget: image
+                allow_multiple: false
+                required: false
+              - name: alt
+                label: Image Alt
+                widget: string
+                required: false
+          - label: Image
+            name: 3d007635
+            widget: object
+            fields:
+              - name: url
+                label: Image Url
+                widget: image
+                allow_multiple: false
+                required: false
+              - name: alt
+                label: Image Alt
+                widget: string
+                required: false
+          - label: Image
+            name: '-54020151'
+            widget: object
+            fields:
+              - name: url
+                label: Image Url
+                widget: image
+                allow_multiple: false
+                required: false
+              - name: alt
+                label: Image Alt
+                widget: string
+                required: false
+          - label: Image
+            name: 766b05cc
+            widget: object
+            fields:
+              - name: url
+                label: Image Url
+                widget: image
+                allow_multiple: false
+                required: false
+              - name: alt
+                label: Image Alt
+                widget: string
+                required: false
+          - label: Image
+            name: '-67443144'
+            widget: object
+            fields:
+              - name: url
+                label: Image Url
+                widget: image
+                allow_multiple: false
+                required: false
+              - name: alt
+                label: Image Alt
+                widget: string
+                required: false
+          - label: Image
+            name: 6b07e40b
+            widget: object
+            fields:
+              - name: url
+                label: Image Url
+                widget: image
+                allow_multiple: false
+                required: false
+              - name: alt
+                label: Image Alt
+                widget: string
+                required: false
+          - label: Image
+            name: '-633415ba'
+            widget: object
+            fields:
+              - name: url
+                label: Image Url
+                widget: image
+                allow_multiple: false
+                required: false
+              - name: alt
+                label: Image Alt
+                widget: string
+                required: false
+          - label: Image
+            name: '-66575a4d'
+            widget: object
+            fields:
+              - name: url
+                label: Image Url
+                widget: image
+                allow_multiple: false
+                required: false
+              - name: alt
+                label: Image Alt
+                widget: string
+                required: false
+          - label: Image
+            name: 2217a3ca
+            widget: object
+            fields:
+              - name: url
+                label: Image Url
+                widget: image
+                allow_multiple: false
+                required: false
+              - name: alt
+                label: Image Alt
+                widget: string
+                required: false
+          - label: Image
+            name: '-20b14ca1'
+            widget: object
+            fields:
+              - name: url
+                label: Image Url
+                widget: image
+                allow_multiple: false
+                required: false
+              - name: alt
+                label: Image Alt
+                widget: string
+                required: false
+          - label: Image
+            name: '-7e253344'
+            widget: object
+            fields:
+              - name: url
+                label: Image Url
+                widget: image
+                allow_multiple: false
+                required: false
+              - name: alt
+                label: Image Alt
+                widget: string
+                required: false
+          - label: Image
+            name: 1908af91
+            widget: object
+            fields:
+              - name: url
+                label: Image Url
+                widget: image
+                allow_multiple: false
+                required: false
+              - name: alt
+                label: Image Alt
+                widget: string
+                required: false
+          - label: Image
+            name: 1b57de3b
+            widget: object
+            fields:
+              - name: url
+                label: Image Url
+                widget: image
+                allow_multiple: false
+                required: false
+              - name: alt
+                label: Image Alt
+                widget: string
+                required: false
+          - label: Image
+            name: 1eba16a0
+            widget: object
+            fields:
+              - name: url
+                label: Image Url
+                widget: image
+                allow_multiple: false
+                required: false
+              - name: alt
+                label: Image Alt
+                widget: string
+                required: false
+          - label: Image
+            name: 317f733b
+            widget: object
+            fields:
+              - name: url
+                label: Image Url
+                widget: image
+                allow_multiple: false
+                required: false
+              - name: alt
+                label: Image Alt
+                widget: string
+                required: false
+          - label: Image
+            name: 6d82c4d5
+            widget: object
+            fields:
+              - name: url
+                label: Image Url
+                widget: image
+                allow_multiple: false
+                required: false
+              - name: alt
+                label: Image Alt
+                widget: string
+                required: false
+          - label: Image
+            name: '0'
+            widget: object
+            fields:
+              - name: url
+                label: Image Url
+                widget: image
+                allow_multiple: false
+                required: false
+              - name: alt
+                label: Image Alt
+                widget: string
+                required: false
+          - label: Image
+            name: '-3042e10c'
+            widget: object
+            fields:
+              - name: url
+                label: Image Url
+                widget: image
+                allow_multiple: false
+                required: false
+              - name: alt
+                label: Image Alt
+                widget: string
+                required: false
+          - label: Image
+            name: 3a2f7595
+            widget: object
+            fields:
+              - name: url
+                label: Image Url
+                widget: image
+                allow_multiple: false
+                required: false
+              - name: alt
+                label: Image Alt
+                widget: string
+                required: false
+local_backend: true
+publish_mode: editorial_workflow

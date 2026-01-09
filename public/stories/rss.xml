@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/">
+  <channel>
+    <title>Stories </title>
+    <description>Stories  Feed</description>
+    <link></link>
+    <pubDate>Fri, 09 Jan 2026 20:51:14 GMT</pubDate>
+    <atom:link href="/stories/rss.xml" rel="self" type="application/rss+xml"/>
+        <item>
+            <title>Claude</title>
+            
+            <link>/stories/claude-101/</link>
+            <pubDate>Fri, 09 Jan 2026 21:50:28 GMT</pubDate>
+            <guid>/stories/claude-101/</guid>
+            
+            <description>Claude&#39;s Story</description>
+            
+        </item>
+        <item>
+            <title>Peter</title>
+            
+            <link>/stories/peter-26/</link>
+            <pubDate>Fri, 09 Jan 2026 21:50:15 GMT</pubDate>
+            <guid>/stories/peter-26/</guid>
+            
+            <description>This is Peter Story</description>
+            
+        </item>
+        <item>
+            <title>this is the 2nd card</title>
+            
+            <link>/stories/this-is-the-2nd-card/</link>
+            <pubDate>Fri, 09 Jan 2026 21:50:05 GMT</pubDate>
+            <guid>/stories/this-is-the-2nd-card/</guid>
+            
+            <description>The rain in Spain stays mainly in the plain</description>
+            
+        </item>
+        <item>
+            <title>Chicago Bands</title>
+            
+            <link>/stories/chicago-bands/</link>
+            <pubDate>Fri, 09 Jan 2026 21:49:54 GMT</pubDate>
+            <guid>/stories/chicago-bands/</guid>
+            
+            <description>Chicago Bands Share</description>
+            
+        </item>
+        <item>
+            <title>ttt</title>
+            
+            <link>/stories/ttt-89/</link>
+            <pubDate>Fri, 09 Jan 2026 20:51:14 GMT</pubDate>
+            <guid>/stories/ttt-89/</guid>
+            
+            <description>;lakjfl;aksjl;aksjdafl</description>
+            
+        </item>
+        <item>
+            <title>ttt</title>
+            
+            <link>/stories/ttt-8-3713e/</link>
+            <pubDate>Fri, 09 Jan 2026 20:51:14 GMT</pubDate>
+            <guid>/stories/ttt-8-3713e/</guid>
+            
+            <description>lkajsdlfasjklskdja;lfdsakfj;lsdkj</description>
+            
+        </item>
+        <item>
+            <title>ttt</title>
+            
+            <link>/stories/ttt-12/</link>
+            <pubDate>Fri, 09 Jan 2026 20:51:14 GMT</pubDate>
+            <guid>/stories/ttt-12/</guid>
+            
+            <content type="html">&lt;p&gt;Write your story here...&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://cdn.prod.website-files.com/69437b612a4e8316713c3947/6955a820c221b5aa7c4cf89a_d23c04ec-8da8-4b23-a55e-88cc6cc038bf.png&quot; alt=&quot;Screenshot 2025-10-15 at 11.06.49 AM.png&quot; title=&quot;Screenshot 2025-10-15 at 11.06.49 AM.png&quot;&gt;&lt;/p&gt;
+</content>
+            
+        </item>
+        <item>
+            <title>Mary</title>
+            
+            <link>/stories/mary-23/</link>
+            <pubDate>Fri, 09 Jan 2026 20:51:14 GMT</pubDate>
+            <guid>/stories/mary-23/</guid>
+            
+            <content type="html">&lt;p&gt;;alkfl;akjlaskdjf&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;https://cdn.prod.website-files.com/69437b612a4e8316713c3947/6955b890809249b6dfbf12b8_c40dc252-ac13-4a1b-8e4e-efb23a983bef.png&quot; alt=&quot;section4-p-500.png&quot;&gt;&lt;/p&gt;
+</content>
+            
+        </item>
+        <item>
+            <title>lllll</title>
+            
+            <link>/stories/lllll-15/</link>
+            <pubDate>Fri, 09 Jan 2026 20:51:14 GMT</pubDate>
+            <guid>/stories/lllll-15/</guid>
+            
+            <content type="html">&lt;p&gt;j;lkjaflkjs;lakjsfdal;kjfds&lt;/p&gt;
+</content>
+            
+        </item>
+        <item>
+            <title>Image Sync Test</title>
+            
+            <link>/stories/image-sync-test-20-40349/</link>
+            <pubDate>Fri, 09 Jan 2026 20:51:14 GMT</pubDate>
+            <guid>/stories/image-sync-test-20-40349/</guid>
+            
+            <description>Testing image sync to Webflow</description>
+            
+        </item>
+        <item>
+            <title>Full Image Test</title>
+            
+            <link>/stories/full-image-test-21/</link>
+            <pubDate>Fri, 09 Jan 2026 20:51:14 GMT</pubDate>
+            <guid>/stories/full-image-test-21/</guid>
+            
+            <description>Testing all image fields now work</description>
+            
+        </item>
+        <item>
+            <title>claude jr</title>
+            
+            <link>/stories/claude-jr-24/</link>
+            <pubDate>Fri, 09 Jan 2026 20:51:14 GMT</pubDate>
+            <guid>/stories/claude-jr-24/</guid>
+            
+            <content type="html">&lt;p&gt;&lt;img src=&quot;https://cdn.prod.website-files.com/69437b612a4e8316713c3947/6955bb83809249b6dfc10824_1785aa49-f1f2-45a4-a1c9-23e3ca02fd14.jpeg&quot; alt=&quot;FRUPDATE2.jpg&quot;&gt;&lt;/p&gt;
+</content>
+            
+        </item>
+        <item>
+            <title>Auto-Sync Test</title>
+            
+            <link>/stories/auto-sync-test-22/</link>
+            <pubDate>Fri, 09 Jan 2026 20:51:14 GMT</pubDate>
+            <guid>/stories/auto-sync-test-22/</guid>
+            
+            <description>Testing automatic Webflow sync from Xano endpoint</description>
+            
+        </item>
+  </channel>
+</rss>
