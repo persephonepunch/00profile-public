@@ -1,0 +1,53 @@
+// Delete Story Endpoint - DELETE /stories/{stories_id}
+// Description: Delete an existing story by ID
+
+// ========== REQUIRED INPUT ==========
+input stories_id integer
+
+// Optional: soft delete (archive instead of permanently delete)
+var soft_delete $_DELETE.soft_delete
+
+// ========== VALIDATION ==========
+precondition $input.stories_id != null "Story ID is required" 400
+precondition $input.stories_id > 0 "Story ID must be a positive integer" 400
+
+// ========== FETCH EXISTING STORY ==========
+var existing_story stories|get:$input.stories_id
+
+// Check if story exists
+precondition $existing_story != null "Story not found" 404
+
+// ========== STORE INFO FOR RESPONSE ==========
+var deleted_story_name $existing_story.story_name
+var deleted_story_email $existing_story.story_email
+
+// ========== PERFORM DELETE ==========
+conditional $soft_delete == "true" || $soft_delete == true
+  // Soft delete: archive the story instead of permanently deleting
+  var archived stories|edit:$input.stories_id:{
+    status: "archived",
+    updated_at: now
+  }
+
+  response {
+    success: true,
+    message: "Story archived successfully",
+    story_id: $input.stories_id,
+    story_name: $deleted_story_name,
+    action: "archived",
+    archived_at: now
+  }
+endConditional
+
+// Hard delete: permanently remove the story
+var deleted stories|delete:$input.stories_id
+
+// ========== RETURN SUCCESS RESPONSE ==========
+response {
+  success: true,
+  message: "Story deleted permanently",
+  story_id: $input.stories_id,
+  story_name: $deleted_story_name,
+  action: "deleted",
+  deleted_at: now
+}

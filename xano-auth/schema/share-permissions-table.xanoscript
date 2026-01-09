@@ -1,0 +1,72 @@
+{
+  "type": "table",
+  "name": "share_permissions",
+  "description": "Share stacks with specific people by email",
+  "fields": [
+    {
+      "name": "id",
+      "type": "integer",
+      "primary_key": true,
+      "auto_increment": true
+    },
+    {
+      "name": "stack_id",
+      "type": "integer",
+      "nullable": false,
+      "foreign_key": "card_stacks.id"
+    },
+    {
+      "name": "shared_with_email",
+      "type": "text",
+      "nullable": false,
+      "indexed": true
+    },
+    {
+      "name": "shared_with_user_id",
+      "type": "integer",
+      "nullable": true,
+      "foreign_key": "users.id",
+      "description": "Populated if recipient has registered"
+    },
+    {
+      "name": "permission_level",
+      "type": "enum",
+      "values": ["view", "contribute"],
+      "nullable": false,
+      "default": "view"
+    },
+    {
+      "name": "status",
+      "type": "enum",
+      "values": ["pending", "active", "revoked"],
+      "nullable": false,
+      "default": "pending"
+    },
+    {
+      "name": "invited_at",
+      "type": "timestamp",
+      "nullable": false,
+      "default": "now"
+    },
+    {
+      "name": "accepted_at",
+      "type": "timestamp",
+      "nullable": true
+    }
+  ],
+  "indexes": [
+    {
+      "name": "idx_share_perm_stack",
+      "fields": ["stack_id"]
+    },
+    {
+      "name": "idx_share_perm_email",
+      "fields": ["shared_with_email"]
+    },
+    {
+      "name": "idx_share_perm_unique",
+      "fields": ["stack_id", "shared_with_email"],
+      "unique": true
+    }
+  ]
+}

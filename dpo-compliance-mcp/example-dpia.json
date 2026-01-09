@@ -1,0 +1,192 @@
+{
+  "id": "dpia-example-001",
+  "name": "Endowment Customer Analytics and Profit Reporting",
+  "description": "Processing of endowment stakeholder customer data for analytics purposes and profit attribution reporting to the Endowment Board",
+  "dataCategory": "endowment",
+  "processingPurpose": ["profit-reporting", "analytics"],
+  "stakeholderType": "endowment",
+  "createdDate": "2025-01-15T00:00:00Z",
+  "lastModified": "2025-01-15T00:00:00Z",
+  "status": "pending-review",
+  "processingActivities": [
+    {
+      "id": "activity-001",
+      "name": "Customer Behavior Analysis",
+      "description": "Analysis of customer purchasing patterns and preferences to generate insights for endowment reporting",
+      "dataSubjects": [
+        {
+          "category": "Endowment Customers",
+          "description": "Individuals who are customers through endowment programs",
+          "vulnerableGroup": false,
+          "count": 50000,
+          "stakeholderAffiliation": "endowment"
+        }
+      ],
+      "personalDataTypes": [
+        {
+          "category": "Demographics",
+          "description": "Age, gender, location",
+          "specialCategory": false,
+          "sensitivity": "medium",
+          "endowmentRestricted": true
+        },
+        {
+          "category": "Purchase History",
+          "description": "Transaction records and purchase patterns",
+          "specialCategory": false,
+          "sensitivity": "medium",
+          "endowmentRestricted": true
+        },
+        {
+          "category": "Contact Information",
+          "description": "Email addresses and phone numbers",
+          "specialCategory": false,
+          "sensitivity": "low",
+          "endowmentRestricted": true
+        }
+      ],
+      "processingBasis": {
+        "legalBasis": "legitimate-interests",
+        "justification": "Processing is necessary for financial reporting to endowment stakeholder board and improving service quality",
+        "endowmentApprovalRequired": true,
+        "endowmentApprovalDate": "2025-01-10T00:00:00Z"
+      },
+      "retentionPeriod": "7 years (per financial regulations)",
+      "recipients": [
+        "Internal Analytics Team",
+        "Endowment Board",
+        "External Auditors"
+      ],
+      "transfers": [
+        {
+          "recipient": "Cloud Analytics Platform",
+          "country": "United States",
+          "safeguards": "Standard Contractual Clauses (SCCs), Encryption",
+          "endowmentApproved": true
+        }
+      ]
+    }
+  ],
+  "riskAssessment": {
+    "overallRiskLevel": "medium",
+    "likelihood": "medium",
+    "severity": "medium",
+    "risks": [
+      {
+        "id": "risk-001",
+        "description": "Unauthorized access to endowment customer data",
+        "likelihood": "low",
+        "impact": "high",
+        "category": "security",
+        "affectedStakeholders": ["endowment"]
+      },
+      {
+        "id": "risk-002",
+        "description": "Inadequate data segregation between endowment and corporate data",
+        "likelihood": "medium",
+        "impact": "high",
+        "category": "compliance",
+        "affectedStakeholders": ["endowment", "corporate"]
+      },
+      {
+        "id": "risk-003",
+        "description": "Inaccurate profit attribution calculations",
+        "likelihood": "medium",
+        "impact": "medium",
+        "category": "financial",
+        "affectedStakeholders": ["endowment"]
+      }
+    ],
+    "endowmentSpecificRisks": [
+      {
+        "id": "risk-endow-001",
+        "description": "Commingling of endowment data with corporate data leading to inaccurate reporting",
+        "likelihood": "medium",
+        "impact": "high",
+        "category": "compliance",
+        "affectedStakeholders": ["endowment"]
+      }
+    ]
+  },
+  "mitigationMeasures": [
+    {
+      "id": "mitigation-001",
+      "riskId": "risk-001",
+      "measure": "Implement role-based access control (RBAC) with multi-factor authentication",
+      "implementation": "Azure AD with conditional access policies, limited access to authorized personnel only",
+      "responsible": "Security Team Lead",
+      "deadline": "2025-02-01",
+      "status": "in-progress",
+      "effectiveness": "high"
+    },
+    {
+      "id": "mitigation-002",
+      "riskId": "risk-002",
+      "measure": "Physical and logical separation of endowment data in dedicated database schema",
+      "implementation": "Separate database schema with restricted access, automated monitoring for cross-contamination",
+      "responsible": "Database Administrator",
+      "deadline": "2025-01-25",
+      "status": "implemented",
+      "effectiveness": "high"
+    },
+    {
+      "id": "mitigation-003",
+      "riskId": "risk-003",
+      "measure": "Documented profit attribution methodology with quarterly audits",
+      "implementation": "Standardized calculation method reviewed by finance and approved by DPO, quarterly verification",
+      "responsible": "Finance Controller",
+      "deadline": "2025-01-20",
+      "status": "implemented",
+      "effectiveness": "medium"
+    },
+    {
+      "id": "mitigation-004",
+      "riskId": "risk-endow-001",
+      "measure": "Automated data tagging and validation system",
+      "implementation": "All data tagged with source (endowment/corporate), automated checks prevent commingling",
+      "responsible": "Data Engineering Team",
+      "deadline": "2025-02-15",
+      "status": "planned",
+      "effectiveness": "high"
+    }
+  ],
+  "necessityTest": {
+    "purposeSpecified": true,
+    "purposeJustification": "Processing is necessary to fulfill contractual obligations to endowment stakeholder for transparent profit reporting and to improve service quality for endowment customers",
+    "adequacyAssessment": "Data collected is limited to what is strictly necessary for analytics and profit calculation. No excessive or irrelevant data is processed.",
+    "relevanceAssessment": "All data categories are directly relevant to understanding customer behavior and calculating revenue attribution",
+    "minimizationMeasures": [
+      "Collection limited to essential demographics only (age range, not exact birthdate)",
+      "Purchase history aggregated to category level where possible",
+      "Contact information used only for necessary communications"
+    ],
+    "alternativesConsidered": [
+      "Anonymous analytics - rejected due to profit attribution requirements",
+      "Sample-based reporting - rejected as insufficient accuracy for fiduciary duty",
+      "Third-party processor - considered but rejected due to data sensitivity"
+    ],
+    "endowmentConsultation": true,
+    "endowmentConsultationNotes": "Consulted with Endowment Data Governance Board on 2025-01-08. Board approved processing with condition of quarterly reviews and strict data segregation."
+  },
+  "profitReportingCompliance": {
+    "applicable": true,
+    "endowmentDataUsed": true,
+    "corporateDataUsed": false,
+    "dataSeparation": true,
+    "separationMechanism": "Dedicated database schema 'endowment_data' with separate authentication, access logging, and automated cross-contamination checks",
+    "profitAttribution": {
+      "endowmentPortion": 100,
+      "corporatePortion": 0,
+      "calculationMethod": "Revenue from endowment customer base tracked separately. All revenue from endowment customers attributed 100% to endowment portion as no corporate data is commingled in this processing activity."
+    },
+    "transparencyMeasures": [
+      "Quarterly reports to Endowment Board with detailed methodology",
+      "Annual independent audit of data processing and profit calculations",
+      "Public-facing privacy notice for endowment customers explaining data use",
+      "Designated Endowment DPO contact for inquiries"
+    ],
+    "endowmentReviewDate": "2025-01-10T00:00:00Z",
+    "endowmentApprovalStatus": "compliant",
+    "deviations": []
+  }
+}

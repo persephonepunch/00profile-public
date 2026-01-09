@@ -1,0 +1,113 @@
+{
+  "type": "endpoint",
+  "name": "/support-cards",
+  "method": "POST",
+  "description": "Create a new support card (students only)",
+  "authentication": "required",
+  "inputs": [
+    {"name": "card_title", "type": "text", "required": true},
+    {"name": "card_subtitle", "type": "text", "required": false},
+    {"name": "card_type", "type": "text", "required": false, "default": "one_time"},
+    {"name": "description", "type": "text", "required": false},
+    {"name": "price_amount", "type": "decimal", "required": false},
+    {"name": "price_recurring", "type": "text", "required": false},
+    {"name": "cta_text", "type": "text", "required": false, "default": "Support Me"},
+    {"name": "stripe_embed_code", "type": "text", "required": false},
+    {"name": "stripe_payment_link", "type": "text", "required": false},
+    {"name": "stripe_buy_button_id", "type": "text", "required": false},
+    {"name": "stripe_publishable_key", "type": "text", "required": false},
+    {"name": "venmo_username", "type": "text", "required": false},
+    {"name": "paypal_email", "type": "text", "required": false},
+    {"name": "card_images", "type": "json", "required": false},
+    {"name": "card_color", "type": "text", "required": false, "default": "#8B0000"},
+    {"name": "payment_methods_shown", "type": "json", "required": false},
+    {"name": "visibility", "type": "text", "required": false, "default": "public"}
+  ],
+  "function_stack": [
+    {
+      "method": "requiresAuth"
+    },
+    {
+      "comment": "=== VERIFY USER IS STUDENT OR ADMIN ==="
+    },
+    {
+      "method": "dbGetSingle",
+      "table": "users",
+      "filter": {"id": "$auth.id"},
+      "output": "user"
+    },
+    {
+      "method": "conditional",
+      "condition": "$user.role != 'student' && $user.role != 'admin'",
+      "then": [
+        {"method": "throw", "code": "FORBIDDEN", "message": "Only students can create support cards", "status": 403}
+      ]
+    },
+    {
+      "method": "precondition",
+      "args": ["$input.card_title != ''", "Card title is required", 400]
+    },
+    {
+      "comment": "=== GET MAX DISPLAY ORDER ==="
+    },
+    {
+      "method": "dbQuery",
+      "table": "support_cards",
+      "filter": {"student_user_id": "$auth.id"},
+      "sort": {"display_order": "desc"},
+      "limit": 1,
+      "output": "last_card"
+    },
+    {
+      "method": "var",
+      "name": "next_order",
+      "value": 0
+    },
+    {
+      "method": "conditional",
+      "condition": "$last_card|length > 0",
+      "then": [
+        {"method": "var", "name": "next_order", "value": "$last_card[0].display_order + 1"}
+      ]
+    },
+    {
+      "comment": "=== CREATE SUPPORT CARD ==="
+    },
+    {
+      "method": "dbAdd",
+      "table": "support_cards",
+      "data": {
+        "student_user_id": "$auth.id",
+        "card_title": "$input.card_title",
+        "card_subtitle": "$input.card_subtitle",
+        "card_type": "$input.card_type",
+        "description": "$input.description",
+        "price_amount": "$input.price_amount",
+        "price_recurring": "$input.price_recurring",
+        "cta_text": "$input.cta_text",
+        "stripe_embed_code": "$input.stripe_embed_code",
+        "stripe_payment_link": "$input.stripe_payment_link",
+        "stripe_buy_button_id": "$input.stripe_buy_button_id",
+        "stripe_publishable_key": "$input.stripe_publishable_key",
+        "venmo_username": "$input.venmo_username",
+        "paypal_email": "$input.paypal_email",
+        "card_images": "$input.card_images",
+        "card_color": "$input.card_color",
+        "payment_methods_shown": "$input.payment_methods_shown",
+        "visibility": "$input.visibility",
+        "is_active": true,
+        "display_order": "$next_order",
+        "created_at": "now",
+        "updated_at": "now"
+      },
+      "output": "new_card"
+    },
+    {
+      "method": "response",
+      "data": {
+        "success": true,
+        "card": "$new_card"
+      }
+    }
+  ]
+}

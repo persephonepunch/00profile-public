@@ -1,0 +1,913 @@
+<style>
+  /* ========== TIPTAP EDITOR STYLES ========== */
+  .tiptap-wrapper {
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    overflow: hidden;
+    background-color: #fff;
+    margin: 20px 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  .tiptap-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 10px;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #f8f8f8;
+  }
+
+  .tiptap-toolbar button {
+    padding: 6px 12px;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    background-color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1.4;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    color: #000;
+  }
+
+  .tiptap-toolbar button:hover {
+    background-color: #e8e8e8;
+    border-color: #b0b0b0;
+  }
+
+  .tiptap-toolbar button.is-active {
+    background-color: #333;
+    color: #fff;
+    border-color: #333;
+  }
+
+  .tiptap-toolbar button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .tiptap-toolbar .separator {
+    width: 1px;
+    height: 24px;
+    background-color: #d0d0d0;
+    margin: 0 4px;
+  }
+
+  .tiptap-editor {
+    padding: 16px;
+    min-height: 300px;
+    max-height: 600px;
+    overflow-y: auto;
+    outline: none;
+    line-height: 1.6;
+    font-size: 16px;
+    color: #000 !important;
+  }
+
+  .tiptap-editor:focus {
+    outline: none;
+  }
+
+  .tiptap-editor * {
+    color: #000 !important;
+  }
+
+  .tiptap-editor a {
+    color: #0066cc !important;
+  }
+
+  .tiptap-editor pre,
+  .tiptap-editor pre * {
+    color: #f8f8f2 !important;
+  }
+
+  .tiptap-editor .ProseMirror > p.is-editor-empty:first-child::before {
+    color: #aaa !important;
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+  }
+
+  /* ========== CARD-* STYLE PREVIEW (matches your Webflow Rich Text) ========== */
+
+  /* Paragraphs - card-paragraph */
+  .tiptap-editor p,
+  .tiptap-editor .card-paragraph {
+    margin: 0 0 12px 0;
+    color: #000 !important;
+    font-size: 16px;
+    line-height: 1.7;
+  }
+
+  .tiptap-editor p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Headings - card-h1 through card-h6 */
+  .tiptap-editor h1, .tiptap-editor .card-h1,
+  .tiptap-editor h2, .tiptap-editor .card-h2,
+  .tiptap-editor h3, .tiptap-editor .card-h3,
+  .tiptap-editor h4, .tiptap-editor .card-h4,
+  .tiptap-editor h5, .tiptap-editor .card-h5,
+  .tiptap-editor h6, .tiptap-editor .card-h6 {
+    margin: 24px 0 12px 0;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #000 !important;
+  }
+
+  .tiptap-editor h1:first-child,
+  .tiptap-editor h2:first-child,
+  .tiptap-editor h3:first-child {
+    margin-top: 0;
+  }
+
+  .tiptap-editor h1, .tiptap-editor .card-h1 { font-size: 2em; }
+  .tiptap-editor h2, .tiptap-editor .card-h2 { font-size: 1.5em; }
+  .tiptap-editor h3, .tiptap-editor .card-h3 { font-size: 1.25em; }
+  .tiptap-editor h4, .tiptap-editor .card-h4 { font-size: 1.1em; }
+  .tiptap-editor h5, .tiptap-editor .card-h5 { font-size: 1em; }
+  .tiptap-editor h6, .tiptap-editor .card-h6 { font-size: 0.9em; }
+
+  /* Lists - card-list */
+  .tiptap-editor ul, .tiptap-editor .card-list,
+  .tiptap-editor ol {
+    padding-left: 24px;
+    margin: 12px 0;
+    color: #000 !important;
+  }
+
+  .tiptap-editor li {
+    margin: 4px 0;
+    color: #000 !important;
+  }
+
+  /* Blockquote - card-quote */
+  .tiptap-editor blockquote,
+  .tiptap-editor .card-quote {
+    border-left: 4px solid #991b1b;
+    padding-left: 16px;
+    margin: 16px 0;
+    color: #333 !important;
+    font-style: italic;
+  }
+
+  /* Code */
+  .tiptap-editor code {
+    background-color: #f4f4f4;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    color: #000 !important;
+  }
+
+  .tiptap-editor pre {
+    background-color: #2d2d2d;
+    color: #f8f8f2 !important;
+    padding: 16px;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 16px 0;
+  }
+
+  .tiptap-editor pre code {
+    background: none;
+    padding: 0;
+    color: #f8f8f2 !important;
+    font-size: 0.9em;
+  }
+
+  /* Links - card-link */
+  .tiptap-editor a,
+  .tiptap-editor .card-link {
+    color: #991b1b !important;
+    text-decoration: underline;
+  }
+
+  /* Images - card-image */
+  .tiptap-editor img,
+  .tiptap-editor .card-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+    margin: 16px 0;
+    display: block;
+  }
+
+  .tiptap-editor strong { font-weight: 600; }
+
+  .tiptap-loading {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+  }
+
+  .tiptap-editor .ProseMirror {
+    color: #000 !important;
+  }
+
+  /* ========== HERO IMAGE UPLOAD (card-image) ========== */
+  .hero-image-field {
+    margin: 16px 0;
+  }
+
+  .hero-image-field label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #fff;
+    font-size: 15px;
+  }
+
+  .image-upload-container {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .image-upload-btn {
+    padding: 10px 20px;
+    background-color: #000;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+  }
+
+  .image-upload-btn:hover {
+    background-color: #333;
+  }
+
+  .image-preview {
+    display: none;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .image-preview.has-image {
+    display: flex;
+  }
+
+  .image-preview img {
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+  }
+
+  .image-preview.avatar img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+  }
+
+  .image-preview .image-name {
+    font-size: 13px;
+    color: #666;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .image-preview .remove-image {
+    padding: 4px 8px;
+    background: #fee2e2;
+    color: #991b1b;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    border-radius: 4px;
+  }
+
+  .image-preview .remove-image:hover {
+    background: #fecaca;
+  }
+
+  /* ========== AUTHOR SECTION ========== */
+  .author-image-field {
+    margin: 16px 0;
+  }
+
+  .author-image-field label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #fff;
+    font-size: 15px;
+  }
+
+  /* ========== UPLOADCARE DIALOG STYLING ========== */
+  .uploadcare--widget__button,
+  .uploadcare--button,
+  .uploadcare--button_primary {
+    background-color: #000 !important;
+    color: #fff !important;
+    border-radius: 0 !important;
+    border: none !important;
+  }
+
+  .uploadcare--widget__button:hover,
+  .uploadcare--button:hover,
+  .uploadcare--button_primary:hover {
+    background-color: #333 !important;
+  }
+</style>
+
+<!-- ========== HERO IMAGE UPLOAD (→ card-image in CMS) ========== -->
+<div class="hero-image-field" id="hero-image-field">
+  <label>Hero Image</label>
+  <div class="image-upload-container">
+    <button type="button" class="image-upload-btn" id="hero-image-btn">📷 Upload Hero Image</button>
+    <div class="image-preview" id="hero-image-preview">
+      <img src="" alt="Preview" id="hero-image-thumb">
+      <span class="image-name" id="hero-image-name"></span>
+      <button type="button" class="remove-image" id="hero-image-remove">✕ Remove</button>
+    </div>
+  </div>
+  <input type="hidden" id="featured_image" name="featured_image">
+</div>
+
+<!-- ========== TIPTAP EDITOR (→ demo-rich in CMS with card-* classes) ========== -->
+<div class="tiptap-wrapper" id="story-editor-wrapper">
+  <div class="tiptap-toolbar" id="tiptap-toolbar">
+    <button type="button" data-action="bold" title="Bold (Ctrl+B)"><strong>B</strong></button>
+    <button type="button" data-action="italic" title="Italic (Ctrl+I)"><em>I</em></button>
+    <button type="button" data-action="underline" title="Underline (Ctrl+U)"><u>U</u></button>
+    <button type="button" data-action="strike" title="Strikethrough"><s>S</s></button>
+
+    <div class="separator"></div>
+
+    <button type="button" data-action="h1" title="Heading 1">H1</button>
+    <button type="button" data-action="h2" title="Heading 2">H2</button>
+    <button type="button" data-action="h3" title="Heading 3">H3</button>
+
+    <div class="separator"></div>
+
+    <button type="button" data-action="bulletList" title="Bullet List">● List</button>
+    <button type="button" data-action="orderedList" title="Numbered List">1. List</button>
+    <button type="button" data-action="blockquote" title="Quote">" Quote</button>
+    <button type="button" data-action="codeBlock" title="Code Block">&lt;/&gt;</button>
+
+    <div class="separator"></div>
+
+    <button type="button" data-action="link" title="Insert Link">🔗 Link</button>
+    <button type="button" data-action="upload" title="Insert Image in Story">🖼️ Image</button>
+  </div>
+
+  <div class="tiptap-editor" id="tiptap-editor">
+    <div class="tiptap-loading">Loading editor...</div>
+  </div>
+</div>
+
+<!-- ========== AUTHOR AVATAR UPLOAD (→ demo__card-avatar) ========== -->
+<div class="author-image-field" id="author-image-field">
+  <label>Your Photo</label>
+  <div class="image-upload-container">
+    <button type="button" class="image-upload-btn" id="author-image-btn">📷 Upload Photo</button>
+    <div class="image-preview avatar" id="author-image-preview">
+      <img src="" alt="Preview" id="author-image-thumb">
+      <span class="image-name" id="author-image-name"></span>
+      <button type="button" class="remove-image" id="author-image-remove">✕ Remove</button>
+    </div>
+  </div>
+  <input type="hidden" id="author_image" name="author_image">
+</div>
+
+<!-- Hidden inputs for Tiptap content -->
+<input type="hidden" id="body_html" name="body_html">
+<input type="hidden" id="body_text" name="body_text">
+
+<!-- ========== UPLOADCARE WIDGET ========== -->
+<script>
+  UPLOADCARE_PUBLIC_KEY = 'b3ab69f1399f85fd8f43';
+  UPLOADCARE_TABS = 'file url camera dropbox gdrive facebook instagram';
+  UPLOADCARE_IMAGES_ONLY = false;
+  UPLOADCARE_MAX_FILE_SIZE = 104857600;
+  UPLOADCARE_LOCALE = 'en';
+  UPLOADCARE_PREVIEW_STEP = true;
+  UPLOADCARE_CLEARABLE = true;
+  UPLOADCARE_MULTIPLE = false;
+</script>
+<script src="https://ucarecdn.com/libs/widget/3.x/uploadcare.full.min.js"></script>
+
+<!-- ========== TIPTAP WITH CARD-* CLASSES OUTPUT ========== -->
+<script type="module">
+import { Editor, Extension } from 'https://esm.sh/@tiptap/core@2.1.13';
+import StarterKit from 'https://esm.sh/@tiptap/starter-kit@2.1.13';
+import Underline from 'https://esm.sh/@tiptap/extension-underline@2.1.13';
+import Link from 'https://esm.sh/@tiptap/extension-link@2.1.13';
+import Image from 'https://esm.sh/@tiptap/extension-image@2.1.13';
+import Placeholder from 'https://esm.sh/@tiptap/extension-placeholder@2.1.13';
+import { Paragraph } from 'https://esm.sh/@tiptap/extension-paragraph@2.1.13';
+import { Heading } from 'https://esm.sh/@tiptap/extension-heading@2.1.13';
+import { Blockquote } from 'https://esm.sh/@tiptap/extension-blockquote@2.1.13';
+import { BulletList } from 'https://esm.sh/@tiptap/extension-bullet-list@2.1.13';
+import { OrderedList } from 'https://esm.sh/@tiptap/extension-ordered-list@2.1.13';
+
+// ============================================================================
+// CONFIGURATION
+// ============================================================================
+const CONFIG = {
+  xanoEndpoint: 'https://xerb-qpd6-hd8t.n7.xano.io/api:pIN2vLYu/stories/submit',
+  formSelector: '#wf-form-Story-Form',
+  requiredFields: ['title', 'author_name', 'author_email'],
+  uploadcareKey: 'b3ab69f1399f85fd8f43',
+  placeholderText: 'Start writing your story here...'
+};
+
+// ============================================================================
+// CUSTOM EXTENSIONS WITH CARD-* CLASSES
+// ============================================================================
+
+// Custom Paragraph with card-paragraph class
+const CardParagraph = Paragraph.extend({
+  renderHTML({ HTMLAttributes }) {
+    return ['p', { ...HTMLAttributes, class: 'card-paragraph' }, 0];
+  }
+});
+
+// Custom Heading with card-h1, card-h2, card-h3 classes
+const CardHeading = Heading.extend({
+  renderHTML({ node, HTMLAttributes }) {
+    const level = node.attrs.level;
+    const tag = `h${level}`;
+    return [tag, { ...HTMLAttributes, class: `card-h${level}` }, 0];
+  }
+});
+
+// Custom Blockquote with card-quote class
+const CardBlockquote = Blockquote.extend({
+  renderHTML({ HTMLAttributes }) {
+    return ['blockquote', { ...HTMLAttributes, class: 'card-quote' }, 0];
+  }
+});
+
+// Custom BulletList with card-list class
+const CardBulletList = BulletList.extend({
+  renderHTML({ HTMLAttributes }) {
+    return ['ul', { ...HTMLAttributes, class: 'card-list card-ul-title' }, 0];
+  }
+});
+
+// Custom OrderedList with card-list class
+const CardOrderedList = OrderedList.extend({
+  renderHTML({ HTMLAttributes }) {
+    return ['ol', { ...HTMLAttributes, class: 'card-list card-ol-title' }, 0];
+  }
+});
+
+// Custom Image with card-image class
+const CardImage = Image.extend({
+  renderHTML({ HTMLAttributes }) {
+    return ['img', {
+      ...HTMLAttributes,
+      class: 'card-image'
+    }];
+  }
+});
+
+// Custom Link with card-link class
+const CardLink = Link.extend({
+  renderHTML({ HTMLAttributes }) {
+    return ['a', {
+      ...HTMLAttributes,
+      class: 'card-link',
+      target: '_blank',
+      rel: 'noopener noreferrer'
+    }, 0];
+  }
+});
+
+// ============================================================================
+// FIELD MAPPING TO WEBFLOW CMS
+// ============================================================================
+// Form Field          →  Xano Field       →  Webflow CMS Field  →  Card Class
+// -------------------------------------------------------------------------------
+// title               →  title            →  name               →  demo-card__h
+// body_html           →  body_html        →  body (Rich Text)   →  Uses card-* classes:
+//                                                                  - p → card-paragraph
+//                                                                  - h1 → card-h1
+//                                                                  - h2 → card-h2
+//                                                                  - h3 → card-h3
+//                                                                  - blockquote → card-quote
+//                                                                  - ul → card-list card-ul-title
+//                                                                  - ol → card-list card-ol-title
+//                                                                  - img → card-image
+//                                                                  - a → card-link
+// featured_image      →  featured_image   →  featured-image     →  card-image (hero)
+// author_name         →  author_name      →  author-name        →  demo-card__p
+// author_image        →  author_image     →  author-image       →  demo__card-avatar
+// ============================================================================
+
+let editor = null;
+
+// ============================================================================
+// UPLOADCARE IMAGE UPLOAD HANDLERS
+// ============================================================================
+
+function setupImageUploaders() {
+  setupImageUploader({
+    buttonId: 'hero-image-btn',
+    previewId: 'hero-image-preview',
+    thumbId: 'hero-image-thumb',
+    nameId: 'hero-image-name',
+    removeId: 'hero-image-remove',
+    inputId: 'featured_image',
+    buttonTextDefault: '📷 Upload Hero Image',
+    buttonTextChange: '📷 Change Hero Image',
+    crop: '16:9'
+  });
+
+  setupImageUploader({
+    buttonId: 'author-image-btn',
+    previewId: 'author-image-preview',
+    thumbId: 'author-image-thumb',
+    nameId: 'author-image-name',
+    removeId: 'author-image-remove',
+    inputId: 'author_image',
+    buttonTextDefault: '📷 Upload Photo',
+    buttonTextChange: '📷 Change Photo',
+    crop: '1:1'
+  });
+}
+
+function setupImageUploader(config) {
+  const btn = document.getElementById(config.buttonId);
+  const preview = document.getElementById(config.previewId);
+  const thumb = document.getElementById(config.thumbId);
+  const nameEl = document.getElementById(config.nameId);
+  const removeBtn = document.getElementById(config.removeId);
+  const input = document.getElementById(config.inputId);
+
+  if (!btn) return;
+
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (typeof uploadcare === 'undefined') {
+      alert('Upload not available. Please refresh the page.');
+      return;
+    }
+
+    const dialog = uploadcare.openDialog(null, {
+      publicKey: CONFIG.uploadcareKey,
+      imagesOnly: true,
+      tabs: 'file url camera',
+      multiple: false,
+      previewStep: true,
+      crop: config.crop || false
+    });
+
+    dialog.done((file) => {
+      file.promise().done((fileInfo) => {
+        console.log(`✅ ${config.inputId} uploaded:`, fileInfo.cdnUrl);
+        if (input) input.value = fileInfo.cdnUrl;
+        if (thumb) thumb.src = fileInfo.cdnUrl;
+        if (nameEl) nameEl.textContent = fileInfo.name || 'Image uploaded';
+        if (preview) preview.classList.add('has-image');
+        btn.textContent = config.buttonTextChange;
+      });
+    });
+  });
+
+  if (removeBtn) {
+    removeBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (input) input.value = '';
+      if (thumb) thumb.src = '';
+      if (nameEl) nameEl.textContent = '';
+      if (preview) preview.classList.remove('has-image');
+      btn.textContent = config.buttonTextDefault;
+    });
+  }
+}
+
+// ============================================================================
+// TIPTAP EDITOR WITH CARD-* CLASS OUTPUT
+// ============================================================================
+
+function initTiptapEditor() {
+  const editorElement = document.getElementById('tiptap-editor');
+  if (!editorElement) {
+    console.error('❌ Tiptap editor element not found');
+    return;
+  }
+
+  editorElement.innerHTML = '';
+
+  try {
+    editor = new Editor({
+      element: editorElement,
+      extensions: [
+        // Use StarterKit but disable nodes we're overriding
+        StarterKit.configure({
+          paragraph: false,
+          heading: false,
+          blockquote: false,
+          bulletList: false,
+          orderedList: false
+        }),
+        // Custom extensions with card-* classes
+        CardParagraph,
+        CardHeading.configure({ levels: [1, 2, 3] }),
+        CardBlockquote,
+        CardBulletList,
+        CardOrderedList,
+        CardImage.configure({
+          inline: false,
+          allowBase64: false
+        }),
+        CardLink.configure({
+          openOnClick: false,
+          autolink: true
+        }),
+        Underline,
+        Placeholder.configure({
+          placeholder: CONFIG.placeholderText
+        })
+      ],
+      editorProps: {
+        attributes: { style: 'color: #000 !important;' }
+      },
+      onUpdate: ({ editor }) => {
+        const htmlInput = document.getElementById('body_html');
+        const textInput = document.getElementById('body_text');
+
+        if (htmlInput) htmlInput.value = editor.getHTML();
+        if (textInput) textInput.value = editor.getText();
+
+        // Log the HTML with card-* classes
+        console.log('📝 HTML with card-* classes:', editor.getHTML());
+      },
+      onCreate: ({ editor }) => {
+        console.log('✅ Tiptap editor initialized with card-* class output');
+        window.tiptapEditor = editor;
+      }
+    });
+
+    setupToolbar();
+
+  } catch (error) {
+    console.error('❌ Error initializing Tiptap:', error);
+    editorElement.innerHTML = '<div class="tiptap-loading" style="color: red;">Error loading editor. Please refresh.</div>';
+  }
+}
+
+function setupToolbar() {
+  const toolbar = document.getElementById('tiptap-toolbar');
+  if (!toolbar || !editor) return;
+
+  const actions = {
+    bold: () => editor.chain().focus().toggleBold().run(),
+    italic: () => editor.chain().focus().toggleItalic().run(),
+    underline: () => editor.chain().focus().toggleUnderline().run(),
+    strike: () => editor.chain().focus().toggleStrike().run(),
+    h1: () => editor.chain().focus().toggleHeading({ level: 1 }).run(),
+    h2: () => editor.chain().focus().toggleHeading({ level: 2 }).run(),
+    h3: () => editor.chain().focus().toggleHeading({ level: 3 }).run(),
+    bulletList: () => editor.chain().focus().toggleBulletList().run(),
+    orderedList: () => editor.chain().focus().toggleOrderedList().run(),
+    blockquote: () => editor.chain().focus().toggleBlockquote().run(),
+    codeBlock: () => editor.chain().focus().toggleCodeBlock().run(),
+    link: handleLinkAction,
+    upload: handleInlineImageUpload
+  };
+
+  toolbar.addEventListener('click', (e) => {
+    const button = e.target.closest('button');
+    if (!button || !editor) return;
+
+    const action = button.dataset.action;
+    if (actions[action]) {
+      e.preventDefault();
+      e.stopPropagation();
+      actions[action]();
+      if (action !== 'upload') {
+        updateToolbarState();
+      }
+    }
+  });
+
+  editor.on('transaction', updateToolbarState);
+  editor.on('selectionUpdate', updateToolbarState);
+  updateToolbarState();
+}
+
+function updateToolbarState() {
+  if (!editor) return;
+  const toolbar = document.getElementById('tiptap-toolbar');
+  if (!toolbar) return;
+
+  toolbar.querySelectorAll('button').forEach(button => {
+    const action = button.dataset.action;
+    let isActive = false;
+
+    switch (action) {
+      case 'bold': isActive = editor.isActive('bold'); break;
+      case 'italic': isActive = editor.isActive('italic'); break;
+      case 'underline': isActive = editor.isActive('underline'); break;
+      case 'strike': isActive = editor.isActive('strike'); break;
+      case 'h1': isActive = editor.isActive('heading', { level: 1 }); break;
+      case 'h2': isActive = editor.isActive('heading', { level: 2 }); break;
+      case 'h3': isActive = editor.isActive('heading', { level: 3 }); break;
+      case 'bulletList': isActive = editor.isActive('bulletList'); break;
+      case 'orderedList': isActive = editor.isActive('orderedList'); break;
+      case 'blockquote': isActive = editor.isActive('blockquote'); break;
+      case 'codeBlock': isActive = editor.isActive('codeBlock'); break;
+      case 'link': isActive = editor.isActive('link'); break;
+    }
+
+    button.classList.toggle('is-active', isActive);
+  });
+}
+
+function handleLinkAction() {
+  if (!editor) return;
+  const previousUrl = editor.getAttributes('link').href;
+  const url = window.prompt('Enter URL (leave empty to remove):', previousUrl || 'https://');
+
+  if (url === null) return;
+  if (url === '') {
+    editor.chain().focus().extendMarkRange('link').unsetLink().run();
+  } else {
+    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+  }
+}
+
+function handleInlineImageUpload() {
+  if (!editor || typeof uploadcare === 'undefined') {
+    alert('Upload not available. Please refresh.');
+    return;
+  }
+
+  const dialog = uploadcare.openDialog(null, {
+    publicKey: CONFIG.uploadcareKey,
+    imagesOnly: true,
+    tabs: 'file url camera dropbox gdrive',
+    multiple: false,
+    previewStep: true
+  });
+
+  dialog.done((file) => {
+    file.promise().done((fileInfo) => {
+      editor.chain().focus().setImage({
+        src: fileInfo.cdnUrl,
+        alt: fileInfo.name || 'Image'
+      }).run();
+      console.log('🖼️ Inline image inserted with card-image class:', fileInfo.cdnUrl);
+    });
+  });
+}
+
+// ============================================================================
+// FORM SUBMISSION
+// ============================================================================
+
+function setupFormHandler() {
+  const form = document.querySelector(CONFIG.formSelector);
+
+  if (!form) {
+    console.error(`❌ Form not found: ${CONFIG.formSelector}`);
+    return;
+  }
+
+  console.log('✅ Form found:', CONFIG.formSelector);
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const submitBtn = form.querySelector('[type="submit"]');
+    const originalBtnText = submitBtn?.value || submitBtn?.textContent || 'Submit';
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      if (submitBtn.value) submitBtn.value = 'Submitting...';
+      else submitBtn.textContent = 'Submitting...';
+    }
+
+    try {
+      for (const fieldName of CONFIG.requiredFields) {
+        const field = form.querySelector(`[name="${fieldName}"]`);
+        if (!field || !field.value.trim()) {
+          throw new Error(`Please fill in the ${fieldName.replace(/_/g, ' ')} field.`);
+        }
+      }
+
+      if (editor && editor.isEmpty) {
+        throw new Error('Please write your story before submitting.');
+      }
+
+      const formData = new FormData(form);
+
+      // ====================================================================
+      // BUILD DATA OBJECT WITH card-* CLASSES IN HTML
+      // ====================================================================
+      // Generate story_input from excerpt or truncated body text
+      const excerptValue = formData.get('excerpt') || '';
+      const bodyTextValue = editor ? editor.getText() : '';
+      const storyInput = excerptValue || bodyTextValue.substring(0, 500);
+
+      const data = {
+        title: formData.get('title') || '',
+        // body_html now contains card-* classes (card-paragraph, card-h1, etc.)
+        body_html: editor ? editor.getHTML() : '',
+        body_text: bodyTextValue,
+        author_name: formData.get('author_name') || '',
+        author_email: formData.get('author_email') || '',
+        excerpt: excerptValue,
+        // story_input is required by Xano - uses excerpt or first 500 chars of content
+        story_input: storyInput,
+        category: formData.get('category') || '',
+        featured_image: document.getElementById('featured_image')?.value || '',
+        author_image: document.getElementById('author_image')?.value || ''
+      };
+      // ====================================================================
+
+      console.log('📤 Submitting with card-* classes:', data);
+      console.log('📝 Sample HTML output:', data.body_html.substring(0, 200));
+
+      const response = await fetch(CONFIG.xanoEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Server error: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('✅ Submission successful:', result);
+
+      form.style.display = 'none';
+      document.getElementById('hero-image-field')?.style.setProperty('display', 'none');
+      document.getElementById('author-image-field')?.style.setProperty('display', 'none');
+
+      const successDiv = form.parentElement?.querySelector('.w-form-done');
+      if (successDiv) {
+        successDiv.style.display = 'block';
+      }
+
+      form.reset();
+      if (editor) editor.commands.clearContent();
+      document.querySelectorAll('.image-preview').forEach(p => p.classList.remove('has-image'));
+      document.getElementById('featured_image').value = '';
+      document.getElementById('author_image').value = '';
+
+    } catch (error) {
+      console.error('❌ Submission error:', error);
+
+      const errorDiv = form.parentElement?.querySelector('.w-form-fail');
+      if (errorDiv) {
+        errorDiv.textContent = error.message;
+        errorDiv.style.display = 'block';
+      } else {
+        alert(error.message);
+      }
+
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        if (submitBtn.value) submitBtn.value = originalBtnText;
+        else submitBtn.textContent = originalBtnText;
+      }
+    }
+  });
+
+  console.log('✅ Form handler ready');
+}
+
+// ============================================================================
+// INITIALIZE
+// ============================================================================
+
+function init() {
+  console.log('🚀 Initializing Stories Form with card-* class output...');
+
+  setTimeout(() => {
+    initTiptapEditor();
+    setupImageUploaders();
+    setupFormHandler();
+    console.log('✅ Ready - HTML output includes card-* classes');
+  }, 100);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+</script>

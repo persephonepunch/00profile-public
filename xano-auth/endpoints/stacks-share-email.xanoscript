@@ -1,0 +1,118 @@
+{
+  "type": "endpoint",
+  "name": "/stacks/{stack_id}/share",
+  "method": "POST",
+  "description": "Share a stack with a specific email address",
+  "authentication": "required",
+  "input": {
+    "stack_id": {"type": "integer", "required": true, "source": "path"},
+    "email": {"type": "email", "required": true},
+    "permission_level": {"type": "enum", "values": ["view", "contribute"], "default": "view"}
+  },
+  "function_stack": [
+    {
+      "method": "requiresAuth"
+    },
+    {
+      "comment": "Get the stack"
+    },
+    {
+      "method": "dbGetSingle",
+      "table": "card_stacks",
+      "filter": {"id": "$input.stack_id"},
+      "output": "stack"
+    },
+    {
+      "comment": "Check ownership"
+    },
+    {
+      "method": "conditional",
+      "condition": "$stack.student_user_id != $auth.id",
+      "then": [
+        {
+          "method": "throw",
+          "code": 403,
+          "message": "You don't have permission to share this stack"
+        }
+      ]
+    },
+    {
+      "comment": "Normalize email"
+    },
+    {
+      "method": "var",
+      "name": "email_lower",
+      "value": "$input.email|lower"
+    },
+    {
+      "comment": "Check if already shared with this email"
+    },
+    {
+      "method": "dbGetAll",
+      "table": "share_permissions",
+      "filter": {"stack_id": "$stack.id", "shared_with_email": "$email_lower"},
+      "output": "existing"
+    },
+    {
+      "method": "conditional",
+      "condition": "$existing|length > 0",
+      "then": [
+        {
+          "comment": "Update existing permission"
+        },
+        {
+          "method": "dbEdit",
+          "table": "share_permissions",
+          "filter": {"id": "$existing[0].id"},
+          "data": {
+            "permission_level": "$input.permission_level",
+            "status": "pending"
+          },
+          "output": "permission"
+        }
+      ],
+      "else": [
+        {
+          "comment": "Check if user is registered"
+        },
+        {
+          "method": "dbGetAll",
+          "table": "users",
+          "filter": {"email": "$email_lower"},
+          "output": "recipient_users"
+        },
+        {
+          "method": "var",
+          "name": "shared_with_user_id",
+          "value": "$recipient_users[0].id ?? null"
+        },
+        {
+          "comment": "Create new share permission"
+        },
+        {
+          "method": "dbAdd",
+          "table": "share_permissions",
+          "data": {
+            "stack_id": "$stack.id",
+            "shared_with_email": "$email_lower",
+            "shared_with_user_id": "$shared_with_user_id",
+            "permission_level": "$input.permission_level",
+            "status": "pending"
+          },
+          "output": "permission"
+        }
+      ]
+    },
+    {
+      "comment": "TODO: Send email notification to recipient"
+    },
+    {
+      "method": "response",
+      "data": {
+        "success": true,
+        "permission": "$permission",
+        "message": "Stack shared with " ~ "$email_lower"
+      }
+    }
+  ]
+}

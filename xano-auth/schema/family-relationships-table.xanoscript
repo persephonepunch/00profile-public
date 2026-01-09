@@ -1,0 +1,83 @@
+{
+  "type": "table",
+  "name": "family_relationships",
+  "description": "Links family members to students with permissions",
+  "fields": [
+    {
+      "name": "id",
+      "type": "integer",
+      "primary_key": true,
+      "auto_increment": true
+    },
+    {
+      "name": "student_user_id",
+      "type": "integer",
+      "nullable": false,
+      "foreign_key": "users.id"
+    },
+    {
+      "name": "family_member_user_id",
+      "type": "integer",
+      "nullable": false,
+      "foreign_key": "users.id"
+    },
+    {
+      "name": "relationship_type",
+      "type": "enum",
+      "values": ["father", "mother", "supporter"],
+      "nullable": false
+    },
+    {
+      "name": "status",
+      "type": "enum",
+      "values": ["pending", "active", "revoked"],
+      "nullable": false,
+      "default": "active"
+    },
+    {
+      "name": "can_view_loans",
+      "type": "boolean",
+      "nullable": false,
+      "default": true
+    },
+    {
+      "name": "can_view_payments",
+      "type": "boolean",
+      "nullable": false,
+      "default": true
+    },
+    {
+      "name": "can_view_calendar",
+      "type": "boolean",
+      "nullable": false,
+      "default": true
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp",
+      "nullable": false,
+      "default": "now"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp",
+      "nullable": false,
+      "default": "now"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "idx_family_rel_unique",
+      "fields": ["student_user_id", "family_member_user_id"],
+      "unique": true
+    },
+    {
+      "name": "idx_family_rel_student",
+      "fields": ["student_user_id"]
+    },
+    {
+      "name": "idx_family_rel_family",
+      "fields": ["family_member_user_id"]
+    }
+  ]
+}

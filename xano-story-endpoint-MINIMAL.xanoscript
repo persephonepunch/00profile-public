@@ -1,0 +1,19 @@
+// Story Submission Endpoint - MINIMAL VERSION (Test First!)
+// Endpoint: POST /story
+// Description: Minimal version with just input validation and basic response
+
+// Step 1: Define required inputs only
+input story_name text
+input story_email text
+
+// Step 2: Input validation
+precondition $input.story_name != "" "Story name is required" 400
+precondition $input.story_email != "" "Email is required" 400
+
+// Step 3: Return success response (no database yet)
+response {
+  success: true,
+  message: "Story validation passed",
+  received_name: $input.story_name,
+  received_email: $input.story_email
+}

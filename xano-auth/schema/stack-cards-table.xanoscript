@@ -1,0 +1,48 @@
+{
+  "type": "table",
+  "name": "stack_cards",
+  "description": "Junction table linking support cards to stacks",
+  "fields": [
+    {
+      "name": "id",
+      "type": "integer",
+      "primary_key": true,
+      "auto_increment": true
+    },
+    {
+      "name": "stack_id",
+      "type": "integer",
+      "nullable": false,
+      "foreign_key": "card_stacks.id"
+    },
+    {
+      "name": "support_card_id",
+      "type": "integer",
+      "nullable": false,
+      "foreign_key": "support_cards.id"
+    },
+    {
+      "name": "display_order",
+      "type": "integer",
+      "nullable": false,
+      "default": 0
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp",
+      "nullable": false,
+      "default": "now"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "idx_stack_cards_stack",
+      "fields": ["stack_id"]
+    },
+    {
+      "name": "idx_stack_cards_unique",
+      "fields": ["stack_id", "support_card_id"],
+      "unique": true
+    }
+  ]
+}

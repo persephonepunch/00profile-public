@@ -1,0 +1,75 @@
+{
+  "type": "endpoint",
+  "name": "/invites/validate",
+  "method": "POST",
+  "description": "Validate an invite token before registration",
+  "authentication": "none",
+  "inputs": [
+    {"name": "token", "type": "text", "required": true}
+  ],
+  "function_stack": [
+    {
+      "method": "precondition",
+      "args": ["$input.token != ''", "Token is required", 400]
+    },
+    {
+      "method": "dbGetSingle",
+      "table": "invites",
+      "filter": {"token": "$input.token"},
+      "output": "invite"
+    },
+    {
+      "method": "conditional",
+      "condition": "$invite == null",
+      "then": [
+        {
+          "method": "response",
+          "data": {"valid": false, "error": "Invalid invite token"}
+        }
+      ]
+    },
+    {
+      "method": "conditional",
+      "condition": "$invite.status != 'pending'",
+      "then": [
+        {
+          "method": "response",
+          "data": {"valid": false, "error": "This invite has already been used"}
+        }
+      ]
+    },
+    {
+      "method": "conditional",
+      "condition": "$invite.expires_at < now",
+      "then": [
+        {
+          "method": "response",
+          "data": {"valid": false, "error": "This invite has expired"}
+        }
+      ]
+    },
+    {
+      "comment": "=== GET INVITER INFO ==="
+    },
+    {
+      "method": "dbGetSingle",
+      "table": "users",
+      "filter": {"id": "$invite.invited_by_user_id"},
+      "fields": ["first_name", "last_name"],
+      "output": "inviter"
+    },
+    {
+      "method": "response",
+      "data": {
+        "valid": true,
+        "invite": {
+          "email": "$invite.email",
+          "role": "$invite.role",
+          "sub_role": "$invite.sub_role",
+          "expires_at": "$invite.expires_at",
+          "invited_by": "'$inviter.first_name' ~ ' ' ~ '$inviter.last_name'"
+        }
+      }
+    }
+  ]
+}

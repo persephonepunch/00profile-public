@@ -1,0 +1,101 @@
+{
+  "type": "table",
+  "name": "card_stacks",
+  "description": "Grouped collections of support cards for sharing",
+  "fields": [
+    {
+      "name": "id",
+      "type": "integer",
+      "primary_key": true,
+      "auto_increment": true
+    },
+    {
+      "name": "student_user_id",
+      "type": "integer",
+      "nullable": false,
+      "foreign_key": "users.id"
+    },
+    {
+      "name": "stack_name",
+      "type": "text",
+      "nullable": false,
+      "description": "e.g., Books & Supplies, Living Expenses"
+    },
+    {
+      "name": "stack_slug",
+      "type": "text",
+      "nullable": false,
+      "description": "URL-safe slug, unique per student"
+    },
+    {
+      "name": "description",
+      "type": "text",
+      "nullable": true
+    },
+    {
+      "name": "cover_image_url",
+      "type": "text",
+      "nullable": true
+    },
+    {
+      "name": "theme_color",
+      "type": "text",
+      "nullable": true,
+      "default": "#8B0000",
+      "description": "Hex color for stack styling"
+    },
+    {
+      "name": "visibility",
+      "type": "enum",
+      "values": ["public", "unlisted", "private"],
+      "nullable": false,
+      "default": "public"
+    },
+    {
+      "name": "is_default",
+      "type": "boolean",
+      "nullable": false,
+      "default": false,
+      "description": "Main stack shown at /s/{student_slug}"
+    },
+    {
+      "name": "display_order",
+      "type": "integer",
+      "nullable": false,
+      "default": 0
+    },
+    {
+      "name": "view_count",
+      "type": "integer",
+      "nullable": false,
+      "default": 0
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp",
+      "nullable": false,
+      "default": "now"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp",
+      "nullable": false,
+      "default": "now"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "idx_stacks_student",
+      "fields": ["student_user_id"]
+    },
+    {
+      "name": "idx_stacks_slug",
+      "fields": ["student_user_id", "stack_slug"],
+      "unique": true
+    },
+    {
+      "name": "idx_stacks_default",
+      "fields": ["student_user_id", "is_default"]
+    }
+  ]
+}

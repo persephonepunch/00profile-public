@@ -1,0 +1,72 @@
+{
+  "type": "endpoint",
+  "name": "/stacks/{stack_id}/reorder",
+  "method": "PUT",
+  "description": "Reorder cards within a stack",
+  "authentication": "required",
+  "input": {
+    "stack_id": {"type": "integer", "required": true, "source": "path"},
+    "card_ids": {"type": "array", "required": true, "description": "Array of support_card_ids in desired order"}
+  },
+  "function_stack": [
+    {
+      "method": "requiresAuth"
+    },
+    {
+      "comment": "Get the stack"
+    },
+    {
+      "method": "dbGetSingle",
+      "table": "card_stacks",
+      "filter": {"id": "$input.stack_id"},
+      "output": "stack"
+    },
+    {
+      "comment": "Check ownership"
+    },
+    {
+      "method": "conditional",
+      "condition": "$stack.student_user_id != $auth.id",
+      "then": [
+        {
+          "method": "throw",
+          "code": 403,
+          "message": "You don't have permission to modify this stack"
+        }
+      ]
+    },
+    {
+      "comment": "Update display order for each card"
+    },
+    {
+      "method": "var",
+      "name": "order",
+      "value": 0
+    },
+    {
+      "method": "forEach",
+      "items": "$input.card_ids",
+      "as": "card_id",
+      "do": [
+        {
+          "method": "dbEdit",
+          "table": "stack_cards",
+          "filter": {"stack_id": "$stack.id", "support_card_id": "$card_id"},
+          "data": {"display_order": "$order"}
+        },
+        {
+          "method": "var",
+          "name": "order",
+          "value": "$order + 1"
+        }
+      ]
+    },
+    {
+      "method": "response",
+      "data": {
+        "success": true,
+        "message": "Cards reordered successfully"
+      }
+    }
+  ]
+}

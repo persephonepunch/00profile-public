@@ -1,0 +1,389 @@
+<!--
+  LOGIN FORM EMBED FOR WEBFLOW
+
+  HOW TO USE:
+  1. In Webflow, create an Embed element where you want the form
+  2. Copy this entire code block
+  3. Paste into the Embed element
+
+  CUSTOMIZE:
+  - Update colors in the <style> section
+  - Change XANO_API_URL below
+-->
+
+<div id="login-widget">
+  <!-- Login Form -->
+  <form id="login-form" class="login-form">
+    <!-- Error Message -->
+    <div id="form-error" class="form-error" style="display: none;">
+      <span id="error-message"></span>
+    </div>
+
+    <!-- Email -->
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required placeholder="you@example.com">
+    </div>
+
+    <!-- Password -->
+    <div class="form-group">
+      <label for="password">Password</label>
+      <div class="password-wrapper">
+        <input type="password" id="password" name="password" required placeholder="Enter your password">
+        <button type="button" class="password-toggle" tabindex="-1">Show</button>
+      </div>
+    </div>
+
+    <!-- Remember Me & Forgot Password -->
+    <div class="form-options">
+      <label class="checkbox-label">
+        <input type="checkbox" id="remember">
+        <span>Remember me</span>
+      </label>
+      <a href="/forgot-password" class="forgot-link">Forgot password?</a>
+    </div>
+
+    <!-- Submit Button -->
+    <button type="submit" id="login-submit" class="submit-btn">Sign In</button>
+
+    <!-- Footer -->
+    <div class="form-footer">
+      Don't have an account? <a href="/signup">Sign up</a>
+    </div>
+  </form>
+
+  <!-- Loading State -->
+  <div id="login-loading" class="loading-state" style="display: none;">
+    <div class="spinner"></div>
+    <p>Signing in...</p>
+  </div>
+
+  <!-- Success State -->
+  <div id="login-success" class="success-state" style="display: none;">
+    <div class="success-icon">✓</div>
+    <h2>Welcome back!</h2>
+    <p class="redirect-text">Redirecting...</p>
+  </div>
+</div>
+
+<style>
+  #login-widget {
+    max-width: 400px;
+    margin: 0 auto;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  }
+
+  .login-form {
+    background: #fff;
+    padding: 32px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 6px;
+  }
+
+  .form-group input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 15px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+  }
+
+  .form-group input:focus {
+    outline: none;
+    border-color: #8B0000;
+    box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.1);
+  }
+
+  .password-wrapper {
+    position: relative;
+  }
+
+  .password-wrapper input {
+    padding-right: 60px;
+  }
+
+  .password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #6b7280;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    font-size: 14px;
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: #6b7280;
+  }
+
+  .checkbox-label input {
+    width: 16px;
+    height: 16px;
+    accent-color: #8B0000;
+  }
+
+  .forgot-link {
+    color: #8B0000;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .forgot-link:hover {
+    text-decoration: underline;
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 14px 24px;
+    background: #8B0000;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .submit-btn:hover {
+    background: #6B0000;
+  }
+
+  .submit-btn:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+  }
+
+  .form-footer {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 14px;
+    color: #6b7280;
+  }
+
+  .form-footer a {
+    color: #8B0000;
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .form-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    padding: 12px 14px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+  }
+
+  .loading-state, .success-state {
+    text-align: center;
+    padding: 60px 20px;
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e5e7eb;
+    border-top-color: #8B0000;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .success-icon {
+    width: 64px;
+    height: 64px;
+    background: #10b981;
+    color: white;
+    font-size: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+  }
+
+  .success-state h2 {
+    color: #166534;
+    margin-bottom: 8px;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+
+  .shake { animation: shake 0.3s ease-in-out; }
+</style>
+
+<script>
+(function() {
+  'use strict';
+
+  const XANO_API_URL = 'https://xerb-qpd6-hd8t.n7.xano.io/api:hJgoiIwh';
+  const redirectDelay = 1500;
+
+  const $ = (s) => document.querySelector(s);
+  const show = (s) => { const el = $(s); if (el) el.style.display = ''; };
+  const hide = (s) => { const el = $(s); if (el) el.style.display = 'none'; };
+
+  async function api(endpoint, method, body) {
+    const res = await fetch(XANO_API_URL + endpoint, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : null
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      const err = new Error(data.message || 'Request failed');
+      err.code = data.code;
+      throw err;
+    }
+    return data;
+  }
+
+  function showError(msg) {
+    $('#error-message').textContent = msg;
+    show('#form-error');
+    $('#login-form').classList.add('shake');
+    setTimeout(() => $('#login-form').classList.remove('shake'), 300);
+  }
+
+  function setLoading(loading) {
+    const btn = $('#login-submit');
+    btn.disabled = loading;
+    btn.textContent = loading ? 'Signing in...' : 'Sign In';
+    if (loading) { hide('#login-form'); show('#login-loading'); }
+    else { show('#login-form'); hide('#login-loading'); }
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    hide('#form-error');
+
+    const email = $('#email').value.trim();
+    const password = $('#password').value;
+
+    if (!email) { showError('Email is required'); return; }
+    if (!password) { showError('Password is required'); return; }
+
+    setLoading(true);
+
+    try {
+      const result = await api('/auth/login', 'POST', { email, password });
+
+      // Store auth
+      localStorage.setItem('xano_auth_token', JSON.stringify(result.authToken));
+      localStorage.setItem('xano_user', JSON.stringify(result.user));
+
+      // Get full user data
+      const me = await fetch(XANO_API_URL + '/auth/me', {
+        headers: { 'Authorization': 'Bearer ' + result.authToken }
+      }).then(r => r.json());
+
+      if (me.permissions) {
+        localStorage.setItem('xano_permissions', JSON.stringify(me.permissions));
+      }
+
+      // Show success
+      hide('#login-loading');
+      show('#login-success');
+
+      // Get redirect URL
+      const redirect = sessionStorage.getItem('xano_redirect');
+      sessionStorage.removeItem('xano_redirect');
+
+      // Determine dashboard by role
+      const dashboards = {
+        admin: '/admin/dashboard',
+        instructor: '/instructor/dashboard',
+        family_member: '/family/dashboard',
+        sponsor: '/sponsor/dashboard'
+      };
+      const defaultDashboard = dashboards[result.user.role] || '/student/dashboard';
+
+      setTimeout(() => {
+        window.location.href = redirect || defaultDashboard;
+      }, redirectDelay);
+
+    } catch (e) {
+      const msgs = {
+        'INVALID_CREDENTIALS': 'Invalid email or password',
+        'ACCOUNT_SUSPENDED': 'Your account has been suspended',
+        'ACCOUNT_PENDING': 'Your account is pending activation',
+        'ACCOUNT_INACTIVE': 'Your account is inactive'
+      };
+      showError(msgs[e.code] || e.message || 'Login failed');
+      setLoading(false);
+    }
+  }
+
+  // Password toggle
+  document.querySelectorAll('.password-toggle').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const input = this.previousElementSibling;
+      input.type = input.type === 'password' ? 'text' : 'password';
+      this.textContent = input.type === 'password' ? 'Show' : 'Hide';
+    });
+  });
+
+  // Init
+  function init() {
+    // Check if already logged in
+    const existingUser = localStorage.getItem('xano_user');
+    if (existingUser) {
+      const user = JSON.parse(existingUser);
+      const dashboards = { admin: '/admin/dashboard', instructor: '/instructor/dashboard', family_member: '/family/dashboard' };
+      window.location.href = dashboards[user.role] || '/student/dashboard';
+      return;
+    }
+
+    // Pre-fill email from URL
+    const params = new URLSearchParams(window.location.search);
+    const email = params.get('email');
+    if (email) $('#email').value = email;
+
+    // Form handler
+    $('#login-form').addEventListener('submit', handleSubmit);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>

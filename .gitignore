@@ -1,0 +1,83 @@
+# Dependencies
+node_modules/
+bower_components/
+jspm_packages/
+
+# Build outputs
+dist/
+build/
+public/
+_site/
+.cache/
+.output/
+.vercel/
+.netlify/
+
+# Environment variables
+.env
+.env.local
+.npmrc
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Testing
+coverage/
+.nyc_output/
+.playwright/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Shopify
+.shopify/
+
+# Hydrogen specific
+.hydrogen/
+.oxygen/
+
+# Package manager
+.pnpm-store/
+.yarn/
+.npm/
+
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Misc
+*.bak
+*.cache
+.eslintcache
+.parcel-cache/
+
+# Keep .claude directory (BMad agents)
+!.claude/
+!.bmad-core/

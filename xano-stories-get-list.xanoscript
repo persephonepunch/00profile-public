@@ -1,0 +1,179 @@
+// Stories List Endpoint - GET /stories
+// Description: Retrieve a paginated list of stories with filtering and sorting options
+
+// ========== INPUT PARAMETERS ==========
+// Pagination
+var page $_GET.page
+var per_page $_GET.per_page
+
+// Filtering
+var status $_GET.status
+var category $_GET.category
+var featured $_GET.featured
+var author_email $_GET.author_email
+var search $_GET.search
+var tags $_GET.tags
+
+// Sorting
+var sort_by $_GET.sort_by
+var sort_order $_GET.sort_order
+
+// ========== SET DEFAULTS ==========
+conditional $page == "" || $page == null || $page < 1
+  var page 1
+endConditional
+
+conditional $per_page == "" || $per_page == null || $per_page < 1
+  var per_page 10
+endConditional
+
+conditional $per_page > 100
+  var per_page 100
+endConditional
+
+conditional $sort_by == "" || $sort_by == null
+  var sort_by "created_at"
+endConditional
+
+conditional $sort_order == "" || $sort_order == null
+  var sort_order "desc"
+endConditional
+
+// Validate sort_by field
+conditional $sort_by != "created_at" && $sort_by != "updated_at" && $sort_by != "story_name" && $sort_by != "view_count" && $sort_by != "published_date"
+  var sort_by "created_at"
+endConditional
+
+// Validate sort_order
+conditional $sort_order != "asc" && $sort_order != "desc"
+  var sort_order "desc"
+endConditional
+
+// ========== BUILD QUERY ==========
+var query stories|query
+
+// Apply status filter (default to published for public access)
+conditional $status != "" && $status != null
+  var query $query|where:"status":$status
+endConditional
+
+// Apply category filter
+conditional $category != "" && $category != null
+  var query $query|where:"category":$category
+endConditional
+
+// Apply featured filter
+conditional $featured == "true" || $featured == true
+  var query $query|where:"featured":true
+endConditional
+
+// Apply author email filter
+conditional $author_email != "" && $author_email != null
+  var query $query|where:"story_email":$author_email
+endConditional
+
+// Apply search filter (searches story_name and story_input)
+conditional $search != "" && $search != null
+  var query $query|whereOr:[
+    {field: "story_name", operator: "contains", value: $search},
+    {field: "story_input", operator: "contains", value: $search}
+  ]
+endConditional
+
+// Apply tags filter
+conditional $tags != "" && $tags != null
+  var query $query|where:"story_tags"|contains:$tags
+endConditional
+
+// ========== GET TOTAL COUNT ==========
+var total_count $query|count
+
+// ========== APPLY SORTING AND PAGINATION ==========
+conditional $sort_order == "desc"
+  var query $query|orderBy:$sort_by:"desc"
+endConditional
+
+conditional $sort_order == "asc"
+  var query $query|orderBy:$sort_by:"asc"
+endConditional
+
+// Calculate offset
+var offset ($page - 1) * $per_page
+
+// Apply pagination
+var query $query|offset:$offset|limit:$per_page
+
+// ========== EXECUTE QUERY ==========
+var stories_list $query|get
+
+// ========== CALCULATE PAGINATION METADATA ==========
+var total_pages ($total_count / $per_page)|ceil
+conditional $total_pages < 1
+  var total_pages 1
+endConditional
+
+var has_next_page $page < $total_pages
+var has_prev_page $page > 1
+
+// ========== TRANSFORM DATA FOR RESPONSE ==========
+var transformed_stories []
+
+forEach $stories_list as $story
+  var story_data {
+    id: $story.id,
+    story_name: $story.story_name,
+    story_email: $story.story_email,
+    story_input: $story.story_input,
+    story_tags: $story.story_tags,
+    category: $story.category,
+    featured: $story.featured,
+    status: $story.status,
+    view_count: $story.view_count,
+
+    // Author info
+    author: {
+      email: $story.story_email,
+      bio: $story.author_bio,
+      photo: $story.author_photo,
+      social: $story.author_social
+    },
+
+    // Media
+    hero_image: $story.uploadcare_url,
+    has_video: $story.video_url != null,
+    has_audio: $story.audio_url != null,
+    has_gallery: $story.gallery_images != null,
+
+    // Timestamps
+    created_at: $story.created_at,
+    updated_at: $story.updated_at,
+    published_date: $story.published_date
+  }
+
+  var transformed_stories $transformed_stories|push:$story_data
+endForEach
+
+// ========== RETURN RESPONSE ==========
+response {
+  success: true,
+  data: $transformed_stories,
+  pagination: {
+    current_page: $page,
+    per_page: $per_page,
+    total_items: $total_count,
+    total_pages: $total_pages,
+    has_next_page: $has_next_page,
+    has_prev_page: $has_prev_page
+  },
+  filters: {
+    status: $status,
+    category: $category,
+    featured: $featured,
+    search: $search,
+    tags: $tags
+  },
+  sort: {
+    sort_by: $sort_by,
+    sort_order: $sort_order
+  }
+}

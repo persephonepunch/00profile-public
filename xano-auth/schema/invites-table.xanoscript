@@ -1,0 +1,92 @@
+{
+  "type": "table",
+  "name": "invites",
+  "description": "Invitation tokens for user registration",
+  "fields": [
+    {
+      "name": "id",
+      "type": "integer",
+      "primary_key": true,
+      "auto_increment": true
+    },
+    {
+      "name": "token",
+      "type": "text",
+      "nullable": false,
+      "unique": true,
+      "indexed": true,
+      "description": "UUID invite token"
+    },
+    {
+      "name": "email",
+      "type": "text",
+      "nullable": false,
+      "indexed": true
+    },
+    {
+      "name": "role",
+      "type": "enum",
+      "values": ["student", "instructor", "family_member"],
+      "nullable": false
+    },
+    {
+      "name": "sub_role",
+      "type": "text",
+      "nullable": true,
+      "description": "For family invites: father, mother, supporter"
+    },
+    {
+      "name": "invited_by_user_id",
+      "type": "integer",
+      "nullable": false,
+      "foreign_key": "users.id"
+    },
+    {
+      "name": "target_user_id",
+      "type": "integer",
+      "nullable": true,
+      "foreign_key": "users.id",
+      "description": "Links family member to student"
+    },
+    {
+      "name": "status",
+      "type": "enum",
+      "values": ["pending", "accepted", "expired", "revoked"],
+      "nullable": false,
+      "default": "pending"
+    },
+    {
+      "name": "expires_at",
+      "type": "timestamp",
+      "nullable": false
+    },
+    {
+      "name": "accepted_at",
+      "type": "timestamp",
+      "nullable": true
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp",
+      "nullable": false,
+      "default": "now"
+    },
+    {
+      "name": "metadata",
+      "type": "json",
+      "nullable": true,
+      "description": "Additional invite data"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "idx_invites_token",
+      "fields": ["token"],
+      "unique": true
+    },
+    {
+      "name": "idx_invites_email_status",
+      "fields": ["email", "status"]
+    }
+  ]
+}

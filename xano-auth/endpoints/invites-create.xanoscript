@@ -1,0 +1,195 @@
+{
+  "type": "endpoint",
+  "name": "/invites/create",
+  "method": "POST",
+  "description": "Create an invite for a new user (admin, instructor, or student inviting family)",
+  "authentication": "required",
+  "inputs": [
+    {"name": "email", "type": "text", "required": true},
+    {"name": "role", "type": "text", "required": true, "description": "student, instructor, or family_member"},
+    {"name": "sub_role", "type": "text", "required": false, "description": "For family: father, mother, supporter"},
+    {"name": "target_student_id", "type": "integer", "required": false, "description": "For admin inviting family on behalf of student"}
+  ],
+  "function_stack": [
+    {
+      "method": "requiresAuth"
+    },
+    {
+      "method": "precondition",
+      "args": ["$input.email != ''", "Email is required", 400]
+    },
+    {
+      "method": "precondition",
+      "args": ["$input.role != ''", "Role is required", 400]
+    },
+    {
+      "method": "precondition",
+      "args": ["$input.role == 'student' || $input.role == 'instructor' || $input.role == 'family_member'", "Invalid role. Must be student, instructor, or family_member", 400]
+    },
+    {
+      "comment": "=== GET CURRENT USER ==="
+    },
+    {
+      "method": "dbGetSingle",
+      "table": "users",
+      "filter": {"id": "$auth.id"},
+      "output": "current_user"
+    },
+    {
+      "comment": "=== VALIDATE PERMISSIONS ==="
+    },
+    {
+      "comment": "Admin can invite anyone"
+    },
+    {
+      "method": "var",
+      "name": "is_authorized",
+      "value": false
+    },
+    {
+      "method": "conditional",
+      "condition": "$current_user.role == 'admin'",
+      "then": [
+        {"method": "var", "name": "is_authorized", "value": true}
+      ]
+    },
+    {
+      "comment": "Instructor can invite students"
+    },
+    {
+      "method": "conditional",
+      "condition": "$current_user.role == 'instructor' && $input.role == 'student'",
+      "then": [
+        {"method": "var", "name": "is_authorized", "value": true}
+      ]
+    },
+    {
+      "comment": "Student can invite family members"
+    },
+    {
+      "method": "conditional",
+      "condition": "$current_user.role == 'student' && $input.role == 'family_member'",
+      "then": [
+        {"method": "var", "name": "is_authorized", "value": true}
+      ]
+    },
+    {
+      "method": "conditional",
+      "condition": "$is_authorized == false",
+      "then": [
+        {"method": "throw", "code": "FORBIDDEN", "message": "You do not have permission to create this type of invite", "status": 403}
+      ]
+    },
+    {
+      "comment": "=== CHECK FOR EXISTING PENDING INVITE ==="
+    },
+    {
+      "method": "dbQuery",
+      "table": "invites",
+      "filter": {"email": "$input.email|lower", "status": "pending"},
+      "output": "existing_invites"
+    },
+    {
+      "method": "conditional",
+      "condition": "$existing_invites|length > 0",
+      "then": [
+        {"method": "throw", "code": "INVITE_EXISTS", "message": "A pending invite already exists for this email", "status": 409}
+      ]
+    },
+    {
+      "comment": "=== CHECK FOR EXISTING USER ==="
+    },
+    {
+      "method": "dbQuery",
+      "table": "users",
+      "filter": {"email": "$input.email|lower"},
+      "output": "existing_users"
+    },
+    {
+      "method": "conditional",
+      "condition": "$existing_users|length > 0",
+      "then": [
+        {"method": "throw", "code": "USER_EXISTS", "message": "A user with this email already exists", "status": 409}
+      ]
+    },
+    {
+      "comment": "=== GENERATE INVITE TOKEN ==="
+    },
+    {
+      "method": "createUuid",
+      "output": "invite_token"
+    },
+    {
+      "method": "var",
+      "name": "expires",
+      "value": "now|add_days:7",
+      "description": "Invite expires in 7 days"
+    },
+    {
+      "comment": "=== SET TARGET USER ID FOR FAMILY INVITES ==="
+    },
+    {
+      "method": "var",
+      "name": "target_id",
+      "value": null
+    },
+    {
+      "method": "conditional",
+      "condition": "$input.role == 'family_member' && $current_user.role == 'student'",
+      "then": [
+        {"method": "var", "name": "target_id", "value": "$auth.id"}
+      ]
+    },
+    {
+      "method": "conditional",
+      "condition": "$input.target_student_id != null && $input.target_student_id > 0",
+      "then": [
+        {"method": "var", "name": "target_id", "value": "$input.target_student_id"}
+      ]
+    },
+    {
+      "comment": "=== CREATE INVITE ==="
+    },
+    {
+      "method": "dbAdd",
+      "table": "invites",
+      "data": {
+        "token": "$invite_token",
+        "email": "$input.email|lower",
+        "role": "$input.role",
+        "sub_role": "$input.sub_role",
+        "invited_by_user_id": "$auth.id",
+        "target_user_id": "$target_id",
+        "status": "pending",
+        "expires_at": "$expires",
+        "created_at": "now"
+      },
+      "output": "new_invite"
+    },
+    {
+      "comment": "=== BUILD INVITE LINK ==="
+    },
+    {
+      "method": "var",
+      "name": "invite_link",
+      "value": "'https://yourdomain.com/register?token=' ~ $invite_token"
+    },
+    {
+      "comment": "=== TODO: Send invite email ==="
+    },
+    {
+      "method": "response",
+      "data": {
+        "success": true,
+        "invite": {
+          "id": "$new_invite.id",
+          "email": "$new_invite.email",
+          "role": "$new_invite.role",
+          "sub_role": "$new_invite.sub_role",
+          "expires_at": "$new_invite.expires_at",
+          "invite_link": "$invite_link"
+        }
+      }
+    }
+  ]
+}

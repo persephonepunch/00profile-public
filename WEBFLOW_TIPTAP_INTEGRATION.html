@@ -1,0 +1,678 @@
+<!--
+  ========================================
+  TIPTAP RICH TEXT EDITOR FOR WEBFLOW
+  ========================================
+
+  Submits to: POST /story (Xano endpoint)
+
+  Instructions:
+  1. Add CSS/JS links to your Webflow page <head>
+  2. Add the editor HTML inside your form
+  3. Add the JavaScript to Before </body>
+  4. Update CONFIG with your Xano endpoint URL
+-->
+
+<!-- STEP 1: Add to Webflow Page Settings → Custom Code → Head -->
+<style>
+  /* Tiptap Editor Styles */
+  .tiptap-wrapper {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+    margin: 16px 0;
+  }
+
+  .tiptap-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+    background: #f9fafb;
+  }
+
+  .tiptap-toolbar button {
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.15s;
+  }
+
+  .tiptap-toolbar button:hover {
+    background: #f3f4f6;
+  }
+
+  .tiptap-toolbar button.is-active {
+    background: #3b82f6;
+    color: #fff;
+    border-color: #3b82f6;
+  }
+
+  .tiptap-toolbar .separator {
+    width: 1px;
+    background: #ddd;
+    margin: 0 8px;
+  }
+
+  .tiptap-editor {
+    padding: 16px;
+    min-height: 300px;
+    outline: none;
+  }
+
+  .tiptap-editor:focus {
+    outline: none;
+  }
+
+  /* Tiptap content styles */
+  .tiptap-editor p {
+    margin: 0 0 1em 0;
+  }
+
+  .tiptap-editor h1, .tiptap-editor h2, .tiptap-editor h3 {
+    margin: 1.5em 0 0.5em 0;
+    font-weight: 600;
+  }
+
+  .tiptap-editor h1 { font-size: 2em; }
+  .tiptap-editor h2 { font-size: 1.5em; }
+  .tiptap-editor h3 { font-size: 1.25em; }
+
+  .tiptap-editor ul, .tiptap-editor ol {
+    padding-left: 1.5em;
+    margin: 1em 0;
+  }
+
+  .tiptap-editor blockquote {
+    border-left: 3px solid #ddd;
+    padding-left: 1em;
+    margin: 1em 0;
+    color: #666;
+  }
+
+  .tiptap-editor code {
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+  }
+
+  .tiptap-editor pre {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+  }
+
+  .tiptap-editor a {
+    color: #3b82f6;
+    text-decoration: underline;
+  }
+
+  .tiptap-editor img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 1em 0;
+  }
+
+  /* Uploadcare button */
+  .uploadcare-btn {
+    background: #6366f1 !important;
+    color: #fff !important;
+  }
+
+  .uploadcare-btn:hover {
+    background: #4f46e5 !important;
+  }
+
+  /* Form messages */
+  .story-message {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin: 16px 0;
+    font-weight: 500;
+  }
+
+  .story-message.success {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .story-message.error {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  /* Character/word count */
+  .tiptap-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px 12px;
+    background: #f9fafb;
+    border-top: 1px solid #eee;
+    font-size: 12px;
+    color: #6b7280;
+  }
+</style>
+
+<!-- STEP 2: Add this HTML inside your Webflow form where you want the editor -->
+<!--
+<div class="tiptap-wrapper" id="story-editor-wrapper">
+  <div class="tiptap-toolbar" id="tiptap-toolbar">
+    <button type="button" data-action="bold" title="Bold"><b>B</b></button>
+    <button type="button" data-action="italic" title="Italic"><i>I</i></button>
+    <button type="button" data-action="underline" title="Underline"><u>U</u></button>
+    <button type="button" data-action="strike" title="Strikethrough"><s>S</s></button>
+    <div class="separator"></div>
+    <button type="button" data-action="h1" title="Heading 1">H1</button>
+    <button type="button" data-action="h2" title="Heading 2">H2</button>
+    <button type="button" data-action="h3" title="Heading 3">H3</button>
+    <div class="separator"></div>
+    <button type="button" data-action="bulletList" title="Bullet List">• List</button>
+    <button type="button" data-action="orderedList" title="Numbered List">1. List</button>
+    <button type="button" data-action="blockquote" title="Quote">"</button>
+    <button type="button" data-action="codeBlock" title="Code Block">&lt;/&gt;</button>
+    <div class="separator"></div>
+    <button type="button" data-action="link" title="Add Link">Link</button>
+    <button type="button" data-action="image" class="uploadcare-btn" title="Upload Image">Image</button>
+  </div>
+  <div class="tiptap-editor" id="tiptap-editor"></div>
+  <div class="tiptap-footer">
+    <span id="word-count">0 words</span>
+  </div>
+</div>
+<input type="hidden" id="story_content_html" name="story_content_html">
+<input type="hidden" id="story_content_json" name="story_content_json">
+-->
+
+<!-- STEP 3: Add to Webflow Page Settings → Custom Code → Before </body> -->
+
+<!-- DOMPurify for HTML sanitization -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+
+<!-- Tiptap Core (ES Module via CDN) -->
+<script type="module">
+import { Editor } from 'https://esm.sh/@tiptap/core@2.1.13';
+import StarterKit from 'https://esm.sh/@tiptap/starter-kit@2.1.13';
+import Underline from 'https://esm.sh/@tiptap/extension-underline@2.1.13';
+import Link from 'https://esm.sh/@tiptap/extension-link@2.1.13';
+import Image from 'https://esm.sh/@tiptap/extension-image@2.1.13';
+import Placeholder from 'https://esm.sh/@tiptap/extension-placeholder@2.1.13';
+
+// ======================================
+// HTML SANITIZATION
+// ======================================
+function sanitizeHTML(html) {
+  if (typeof DOMPurify !== 'undefined') {
+    return DOMPurify.sanitize(html, {
+      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'h1', 'h2', 'h3',
+                     'ul', 'ol', 'li', 'blockquote', 'pre', 'code', 'a', 'img'],
+      ALLOWED_ATTR: ['href', 'src', 'alt', 'target', 'rel', 'class'],
+      ALLOW_DATA_ATTR: false
+    });
+  }
+  return html;
+}
+
+function isValidURL(string) {
+  try {
+    const url = new URL(string);
+    return ['http:', 'https:'].includes(url.protocol);
+  } catch {
+    return false;
+  }
+}
+
+// ======================================
+// CONFIGURATION - UPDATE THESE VALUES
+// ======================================
+const CONFIG = {
+  // Your Xano story endpoint
+  xanoEndpoint: 'https://xerb-qpd6-hd8t.n7.xano.io/api:pIN2vLYu/story',
+
+  // Uploadcare public key (optional - for image uploads)
+  uploadcareKey: 'YOUR_UPLOADCARE_PUBLIC_KEY',
+
+  // Form selector - update to match your Webflow form
+  formSelector: '#wf-form-story',
+
+  // Required field names (must match your form input names)
+  requiredFields: ['story_name', 'story_email']
+};
+
+// ======================================
+// TIPTAP EDITOR SETUP
+// ======================================
+let editor = null;
+
+function initTiptapEditor() {
+  const editorElement = document.getElementById('tiptap-editor');
+  if (!editorElement) {
+    console.warn('Tiptap editor element not found');
+    return;
+  }
+
+  editor = new Editor({
+    element: editorElement,
+    extensions: [
+      StarterKit.configure({
+        heading: { levels: [1, 2, 3] }
+      }),
+      Underline,
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: { target: '_blank', rel: 'noopener noreferrer' }
+      }),
+      Image.configure({
+        inline: false,
+        allowBase64: false
+      }),
+      Placeholder.configure({
+        placeholder: 'Write your story here...'
+      })
+    ],
+    onUpdate: ({ editor }) => {
+      // Sync to hidden inputs
+      const htmlInput = document.getElementById('story_content_html');
+      const jsonInput = document.getElementById('story_content_json');
+
+      if (htmlInput) htmlInput.value = sanitizeHTML(editor.getHTML());
+      if (jsonInput) jsonInput.value = JSON.stringify(editor.getJSON());
+
+      updateWordCount();
+    }
+  });
+
+  setupToolbar();
+  console.log('Tiptap editor initialized');
+}
+
+// ======================================
+// TOOLBAR ACTIONS
+// ======================================
+function setupToolbar() {
+  const toolbar = document.getElementById('tiptap-toolbar');
+  if (!toolbar) return;
+
+  toolbar.addEventListener('click', (e) => {
+    const button = e.target.closest('button');
+    if (!button || !editor) return;
+
+    const action = button.dataset.action;
+
+    switch (action) {
+      case 'bold':
+        editor.chain().focus().toggleBold().run();
+        break;
+      case 'italic':
+        editor.chain().focus().toggleItalic().run();
+        break;
+      case 'underline':
+        editor.chain().focus().toggleUnderline().run();
+        break;
+      case 'strike':
+        editor.chain().focus().toggleStrike().run();
+        break;
+      case 'h1':
+        editor.chain().focus().toggleHeading({ level: 1 }).run();
+        break;
+      case 'h2':
+        editor.chain().focus().toggleHeading({ level: 2 }).run();
+        break;
+      case 'h3':
+        editor.chain().focus().toggleHeading({ level: 3 }).run();
+        break;
+      case 'bulletList':
+        editor.chain().focus().toggleBulletList().run();
+        break;
+      case 'orderedList':
+        editor.chain().focus().toggleOrderedList().run();
+        break;
+      case 'blockquote':
+        editor.chain().focus().toggleBlockquote().run();
+        break;
+      case 'codeBlock':
+        editor.chain().focus().toggleCodeBlock().run();
+        break;
+      case 'link':
+        addLink();
+        break;
+      case 'image':
+        uploadImage();
+        break;
+    }
+
+    updateToolbarState();
+  });
+
+  // Update toolbar state on selection change
+  if (editor) {
+    editor.on('selectionUpdate', updateToolbarState);
+    editor.on('transaction', updateToolbarState);
+  }
+}
+
+function updateToolbarState() {
+  if (!editor) return;
+
+  const toolbar = document.getElementById('tiptap-toolbar');
+  if (!toolbar) return;
+
+  toolbar.querySelectorAll('button').forEach(button => {
+    const action = button.dataset.action;
+    let isActive = false;
+
+    switch (action) {
+      case 'bold': isActive = editor.isActive('bold'); break;
+      case 'italic': isActive = editor.isActive('italic'); break;
+      case 'underline': isActive = editor.isActive('underline'); break;
+      case 'strike': isActive = editor.isActive('strike'); break;
+      case 'h1': isActive = editor.isActive('heading', { level: 1 }); break;
+      case 'h2': isActive = editor.isActive('heading', { level: 2 }); break;
+      case 'h3': isActive = editor.isActive('heading', { level: 3 }); break;
+      case 'bulletList': isActive = editor.isActive('bulletList'); break;
+      case 'orderedList': isActive = editor.isActive('orderedList'); break;
+      case 'blockquote': isActive = editor.isActive('blockquote'); break;
+      case 'codeBlock': isActive = editor.isActive('codeBlock'); break;
+      case 'link': isActive = editor.isActive('link'); break;
+    }
+
+    button.classList.toggle('is-active', isActive);
+  });
+}
+
+function updateWordCount() {
+  const countEl = document.getElementById('word-count');
+  if (!countEl || !editor) return;
+
+  const text = editor.getText();
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  countEl.textContent = `${words} word${words !== 1 ? 's' : ''}`;
+}
+
+// ======================================
+// LINK INSERTION
+// ======================================
+function addLink() {
+  if (!editor) return;
+
+  const previousUrl = editor.getAttributes('link').href;
+  const url = window.prompt('Enter URL:', previousUrl || 'https://');
+
+  if (url === null) return; // Cancelled
+
+  if (url === '') {
+    editor.chain().focus().extendMarkRange('link').unsetLink().run();
+  } else if (isValidURL(url)) {
+    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+  } else {
+    alert('Please enter a valid URL (http:// or https://)');
+  }
+}
+
+// ======================================
+// IMAGE UPLOAD (Uploadcare or URL)
+// ======================================
+function uploadImage() {
+  if (!editor) return;
+
+  // If Uploadcare is available, use it
+  if (typeof uploadcare !== 'undefined' && CONFIG.uploadcareKey !== 'YOUR_UPLOADCARE_PUBLIC_KEY') {
+    const widget = uploadcare.openDialog(null, {
+      publicKey: CONFIG.uploadcareKey,
+      imagesOnly: true,
+      crop: 'free'
+    });
+
+    widget.done((file) => {
+      file.promise().done((fileInfo) => {
+        editor.chain().focus().setImage({
+          src: fileInfo.cdnUrl,
+          alt: fileInfo.name || 'Uploaded image'
+        }).run();
+
+        // Store Uploadcare metadata in hidden fields
+        setUploadcareData(fileInfo);
+      });
+    });
+  } else {
+    // Fallback to URL prompt
+    const url = window.prompt('Enter image URL:');
+    if (url) {
+      editor.chain().focus().setImage({ src: url }).run();
+    }
+  }
+}
+
+function setUploadcareData(fileInfo) {
+  // These hidden inputs can be added to your form for Uploadcare metadata
+  const fields = {
+    'uploadcare_uuid': fileInfo.uuid,
+    'uploadcare_url': fileInfo.cdnUrl,
+    'uploadcare_file_name': fileInfo.name,
+    'uploadcare_file_size': fileInfo.size,
+    'uploadcare_mime_type': fileInfo.mimeType
+  };
+
+  Object.entries(fields).forEach(([name, value]) => {
+    let input = document.querySelector(`input[name="${name}"]`);
+    if (!input) {
+      input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = name;
+      document.querySelector(CONFIG.formSelector)?.appendChild(input);
+    }
+    input.value = value || '';
+  });
+}
+
+// ======================================
+// FORM SUBMISSION
+// ======================================
+function setupFormHandler() {
+  const form = document.querySelector(CONFIG.formSelector);
+  if (!form) {
+    console.warn('Form not found:', CONFIG.formSelector);
+    return;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const submitBtn = form.querySelector('[type="submit"]');
+    const originalText = submitBtn?.value || submitBtn?.textContent || 'Submit';
+
+    // Loading state
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      if (submitBtn.value) submitBtn.value = 'Submitting...';
+      else submitBtn.textContent = 'Submitting...';
+    }
+
+    try {
+      // Validate required fields
+      for (const fieldName of CONFIG.requiredFields) {
+        const field = form.querySelector(`[name="${fieldName}"]`);
+        if (!field || !field.value.trim()) {
+          throw new Error(`${fieldName.replace('_', ' ')} is required`);
+        }
+      }
+
+      // Build form data
+      const formData = {};
+      const elements = form.elements;
+
+      for (let i = 0; i < elements.length; i++) {
+        const el = elements[i];
+        if (!el.name || el.type === 'submit') continue;
+
+        if (el.type === 'checkbox') {
+          formData[el.name] = el.checked ? 'true' : 'false';
+        } else {
+          formData[el.name] = el.value;
+        }
+      }
+
+      // Add Tiptap content (sanitized)
+      if (editor) {
+        formData.story_content_html = sanitizeHTML(editor.getHTML());
+        // Optional: include JSON for structured data
+        // formData.story_content_json = JSON.stringify(editor.getJSON());
+      }
+
+      console.log('Submitting to Xano:', formData);
+
+      // Submit to Xano
+      const response = await fetch(CONFIG.xanoEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || `Error: ${response.status}`);
+      }
+
+      console.log('Story submitted:', result);
+      showMessage('Story submitted successfully!', 'success');
+
+      // Reset form
+      form.reset();
+      if (editor) editor.commands.clearContent();
+
+      // Show Webflow success state
+      const successDiv = form.parentElement?.querySelector('.w-form-done');
+      if (successDiv) {
+        form.style.display = 'none';
+        successDiv.style.display = 'block';
+      }
+
+    } catch (error) {
+      console.error('Submission error:', error);
+      showMessage(error.message || 'Failed to submit. Please try again.', 'error');
+
+      // Show Webflow error state
+      const errorDiv = form.parentElement?.querySelector('.w-form-fail');
+      if (errorDiv) errorDiv.style.display = 'block';
+
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        if (submitBtn.value) submitBtn.value = originalText;
+        else submitBtn.textContent = originalText;
+      }
+    }
+  });
+
+  console.log('Form handler ready');
+}
+
+function showMessage(text, type) {
+  // Remove existing messages
+  document.querySelectorAll('.story-message').forEach(el => el.remove());
+
+  const msg = document.createElement('div');
+  msg.className = `story-message ${type}`;
+  msg.textContent = text;
+
+  const form = document.querySelector(CONFIG.formSelector);
+  if (form) {
+    form.insertAdjacentElement('beforebegin', msg);
+    setTimeout(() => msg.remove(), 5000);
+  }
+}
+
+// ======================================
+// INITIALIZE
+// ======================================
+function init() {
+  initTiptapEditor();
+  setupFormHandler();
+  console.log('Webflow Tiptap integration ready');
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+</script>
+
+<!-- Optional: Uploadcare Widget (uncomment if using Uploadcare for images) -->
+<!--
+<script>
+  UPLOADCARE_PUBLIC_KEY = 'YOUR_UPLOADCARE_PUBLIC_KEY';
+  UPLOADCARE_TABS = 'file camera url';
+</script>
+<script src="https://ucarecdn.com/libs/widget/3.x/uploadcare.full.min.js"></script>
+-->
+
+<!--
+  ========================================
+  WEBFLOW FORM FIELD NAMES
+  ========================================
+
+  Your Webflow form should have these fields with matching 'name' attributes:
+
+  REQUIRED:
+  - story_name (text input)
+  - story_email (email input)
+
+  OPTIONAL:
+  - story_input (text input)
+  - story_tags (text input)
+  - story_checkbox (checkbox)
+  - story_content_html (hidden - auto-populated by Tiptap)
+
+  UPLOADCARE (if using image upload):
+  - uploadcare_uuid (hidden - auto-populated)
+  - uploadcare_url (hidden - auto-populated)
+  - uploadcare_file_name (hidden - auto-populated)
+  - uploadcare_file_size (hidden - auto-populated)
+  - uploadcare_mime_type (hidden - auto-populated)
+
+  ========================================
+  EXAMPLE WEBFLOW FORM STRUCTURE
+  ========================================
+
+  <form id="wf-form-story" name="story" data-name="story">
+    <input type="text" name="story_name" placeholder="Your Name" required>
+    <input type="email" name="story_email" placeholder="Your Email" required>
+    <input type="text" name="story_input" placeholder="Story Title">
+    <input type="text" name="story_tags" placeholder="Tags (comma separated)">
+
+    [Tiptap Editor HTML goes here]
+
+    <label>
+      <input type="checkbox" name="story_checkbox">
+      I agree to the terms
+    </label>
+
+    <button type="submit">Submit Story</button>
+  </form>
+
+  ========================================
+  DATA CONVERSION NOTES (Tiptap vs others)
+  ========================================
+
+  Tiptap stores content as:
+  1. JSON (ProseMirror document) - structured, easy to query/validate
+  2. HTML - for display/rendering
+
+  This script sends HTML to Xano (story_content_html field).
+
+  To also send JSON for more structured storage, uncomment this line
+  in the form submission:
+    formData.story_content_json = JSON.stringify(editor.getJSON());
+
+  And add a corresponding field in your Xano database.
+-->

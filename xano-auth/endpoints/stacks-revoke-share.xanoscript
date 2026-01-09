@@ -1,0 +1,67 @@
+{
+  "type": "endpoint",
+  "name": "/stacks/{stack_id}/share/{share_id}",
+  "method": "DELETE",
+  "description": "Revoke a share permission or deactivate a share link",
+  "authentication": "required",
+  "input": {
+    "stack_id": {"type": "integer", "required": true, "source": "path"},
+    "share_id": {"type": "integer", "required": true, "source": "path"},
+    "type": {"type": "enum", "values": ["permission", "link"], "default": "permission"}
+  },
+  "function_stack": [
+    {
+      "method": "requiresAuth"
+    },
+    {
+      "comment": "Get the stack"
+    },
+    {
+      "method": "dbGetSingle",
+      "table": "card_stacks",
+      "filter": {"id": "$input.stack_id"},
+      "output": "stack"
+    },
+    {
+      "comment": "Check ownership"
+    },
+    {
+      "method": "conditional",
+      "condition": "$stack.student_user_id != $auth.id",
+      "then": [
+        {
+          "method": "throw",
+          "code": 403,
+          "message": "You don't have permission to modify this stack's sharing"
+        }
+      ]
+    },
+    {
+      "method": "conditional",
+      "condition": "$input.type == 'permission'",
+      "then": [
+        {
+          "method": "dbEdit",
+          "table": "share_permissions",
+          "filter": {"id": "$input.share_id", "stack_id": "$stack.id"},
+          "data": {"status": "revoked"}
+        }
+      ],
+      "else": [
+        {
+          "method": "dbEdit",
+          "table": "share_links",
+          "filter": {"id": "$input.share_id", "stack_id": "$stack.id"},
+          "data": {"is_active": false}
+        }
+      ]
+    },
+    {
+      "method": "response",
+      "data": {
+        "success": true,
+        "message": "Share access revoked"
+      }
+    }
+  ]
+}

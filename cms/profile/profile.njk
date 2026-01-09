@@ -1,0 +1,11 @@
+---
+pagination:
+  data: profiles
+  size: 1
+  alias: profile
+permalink: "profile/{{ profile.slug }}/index.html"
+layout: profile.html
+tags: profile
+eleventyComputed:
+  title: "{{ profile.name }}"
+---

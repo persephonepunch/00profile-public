@@ -1,0 +1,110 @@
+{
+  "type": "table",
+  "name": "users",
+  "description": "User accounts for authentication",
+  "fields": [
+    {
+      "name": "id",
+      "type": "integer",
+      "primary_key": true,
+      "auto_increment": true
+    },
+    {
+      "name": "email",
+      "type": "text",
+      "nullable": false,
+      "unique": true,
+      "indexed": true
+    },
+    {
+      "name": "password",
+      "type": "text",
+      "nullable": false,
+      "description": "Hashed password using |hash filter"
+    },
+    {
+      "name": "role",
+      "type": "enum",
+      "values": ["student", "instructor", "family_member", "admin"],
+      "nullable": false,
+      "default": "student"
+    },
+    {
+      "name": "sub_role",
+      "type": "text",
+      "nullable": true,
+      "description": "For family members: father, mother, supporter"
+    },
+    {
+      "name": "first_name",
+      "type": "text",
+      "nullable": false
+    },
+    {
+      "name": "last_name",
+      "type": "text",
+      "nullable": false
+    },
+    {
+      "name": "profile_image_url",
+      "type": "text",
+      "nullable": true
+    },
+    {
+      "name": "phone",
+      "type": "text",
+      "nullable": true
+    },
+    {
+      "name": "status",
+      "type": "enum",
+      "values": ["pending", "active", "suspended", "inactive"],
+      "nullable": false,
+      "default": "pending"
+    },
+    {
+      "name": "email_verified",
+      "type": "boolean",
+      "nullable": false,
+      "default": false
+    },
+    {
+      "name": "invited_by_user_id",
+      "type": "integer",
+      "nullable": true,
+      "foreign_key": "users.id"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp",
+      "nullable": false,
+      "default": "now"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp",
+      "nullable": false,
+      "default": "now"
+    },
+    {
+      "name": "last_login_at",
+      "type": "timestamp",
+      "nullable": true
+    }
+  ],
+  "indexes": [
+    {
+      "name": "idx_users_email",
+      "fields": ["email"],
+      "unique": true
+    },
+    {
+      "name": "idx_users_role",
+      "fields": ["role"]
+    },
+    {
+      "name": "idx_users_status",
+      "fields": ["status"]
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "type": "endpoint",
+  "name": "/stacks/{stack_id}",
+  "method": "GET",
+  "description": "Get a specific stack with its cards",
+  "authentication": "required",
+  "input": {
+    "stack_id": {"type": "integer", "required": true, "source": "path"}
+  },
+  "function_stack": [
+    {
+      "method": "requiresAuth"
+    },
+    {
+      "comment": "Get the stack"
+    },
+    {
+      "method": "dbGetSingle",
+      "table": "card_stacks",
+      "filter": {"id": "$input.stack_id"},
+      "output": "stack"
+    },
+    {
+      "comment": "Check ownership"
+    },
+    {
+      "method": "conditional",
+      "condition": "$stack.student_user_id != $auth.id",
+      "then": [
+        {
+          "method": "throw",
+          "code": 403,
+          "message": "You don't have permission to view this stack"
+        }
+      ]
+    },
+    {
+      "comment": "Get cards in the stack with their details"
+    },
+    {
+      "method": "dbGetAll",
+      "table": "stack_cards",
+      "filter": {"stack_id": "$stack.id"},
+      "sort": [{"field": "display_order", "direction": "asc"}],
+      "output": "stack_card_links"
+    },
+    {
+      "method": "var",
+      "name": "cards",
+      "value": "[]"
+    },
+    {
+      "method": "forEach",
+      "items": "$stack_card_links",
+      "as": "link",
+      "do": [
+        {
+          "method": "dbGetSingle",
+          "table": "support_cards",
+          "filter": {"id": "$link.support_card_id"},
+          "output": "card"
+        },
+        {
+          "method": "var",
+          "name": "card.display_order_in_stack",
+          "value": "$link.display_order"
+        },
+        {
+          "method": "arrayPush",
+          "array": "$cards",
+          "value": "$card"
+        }
+      ]
+    },
+    {
+      "comment": "Get share links"
+    },
+    {
+      "method": "dbGetAll",
+      "table": "share_links",
+      "filter": {"stack_id": "$stack.id"},
+      "output": "share_links"
+    },
+    {
+      "comment": "Get share permissions"
+    },
+    {
+      "method": "dbGetAll",
+      "table": "share_permissions",
+      "filter": {"stack_id": "$stack.id"},
+      "output": "share_permissions"
+    },
+    {
+      "method": "response",
+      "data": {
+        "stack": "$stack",
+        "cards": "$cards",
+        "share_links": "$share_links",
+        "share_permissions": "$share_permissions"
+      }
+    }
+  ]
+}

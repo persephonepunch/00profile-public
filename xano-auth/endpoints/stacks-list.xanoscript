@@ -1,0 +1,60 @@
+{
+  "type": "endpoint",
+  "name": "/stacks",
+  "method": "GET",
+  "description": "List all stacks for the authenticated user",
+  "authentication": "required",
+  "function_stack": [
+    {
+      "method": "requiresAuth"
+    },
+    {
+      "comment": "Get all stacks for the current user"
+    },
+    {
+      "method": "dbGetAll",
+      "table": "card_stacks",
+      "filter": {"student_user_id": "$auth.id"},
+      "sort": [{"field": "display_order", "direction": "asc"}],
+      "output": "stacks"
+    },
+    {
+      "comment": "For each stack, get the card count"
+    },
+    {
+      "method": "forEach",
+      "items": "$stacks",
+      "as": "stack",
+      "do": [
+        {
+          "method": "dbGetAll",
+          "table": "stack_cards",
+          "filter": {"stack_id": "$stack.id"},
+          "output": "stack_cards"
+        },
+        {
+          "method": "var",
+          "name": "stack.card_count",
+          "value": "$stack_cards|length"
+        },
+        {
+          "method": "dbGetAll",
+          "table": "share_links",
+          "filter": {"stack_id": "$stack.id", "is_active": true},
+          "output": "active_links"
+        },
+        {
+          "method": "var",
+          "name": "stack.active_share_links",
+          "value": "$active_links|length"
+        }
+      ]
+    },
+    {
+      "method": "response",
+      "data": {
+        "stacks": "$stacks"
+      }
+    }
+  ]
+}

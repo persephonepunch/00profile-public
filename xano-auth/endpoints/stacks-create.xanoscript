@@ -1,0 +1,106 @@
+{
+  "type": "endpoint",
+  "name": "/stacks",
+  "method": "POST",
+  "description": "Create a new card stack",
+  "authentication": "required",
+  "input": {
+    "stack_name": {"type": "text", "required": true},
+    "description": {"type": "text", "required": false},
+    "cover_image_url": {"type": "text", "required": false},
+    "theme_color": {"type": "text", "required": false, "default": "#8B0000"},
+    "visibility": {"type": "enum", "values": ["public", "unlisted", "private"], "default": "public"},
+    "is_default": {"type": "boolean", "default": false}
+  },
+  "function_stack": [
+    {
+      "method": "requiresAuth"
+    },
+    {
+      "comment": "Generate slug from stack name"
+    },
+    {
+      "method": "var",
+      "name": "stack_slug",
+      "value": "$input.stack_name|slugify"
+    },
+    {
+      "comment": "Check if slug already exists for this user"
+    },
+    {
+      "method": "dbGetAll",
+      "table": "card_stacks",
+      "filter": {"student_user_id": "$auth.id", "stack_slug": "$stack_slug"},
+      "output": "existing_stacks"
+    },
+    {
+      "method": "conditional",
+      "condition": "$existing_stacks|length > 0",
+      "then": [
+        {
+          "method": "var",
+          "name": "stack_slug",
+          "value": "$stack_slug ~ '-' ~ $timestamp|date('U')"
+        }
+      ]
+    },
+    {
+      "comment": "If setting as default, unset other defaults"
+    },
+    {
+      "method": "conditional",
+      "condition": "$input.is_default == true",
+      "then": [
+        {
+          "method": "dbEditAll",
+          "table": "card_stacks",
+          "filter": {"student_user_id": "$auth.id", "is_default": true},
+          "data": {"is_default": false}
+        }
+      ]
+    },
+    {
+      "comment": "Get max display order"
+    },
+    {
+      "method": "dbGetAll",
+      "table": "card_stacks",
+      "filter": {"student_user_id": "$auth.id"},
+      "sort": [{"field": "display_order", "direction": "desc"}],
+      "limit": 1,
+      "output": "last_stack"
+    },
+    {
+      "method": "var",
+      "name": "next_order",
+      "value": "$last_stack[0].display_order + 1 ?? 0"
+    },
+    {
+      "comment": "Create the stack"
+    },
+    {
+      "method": "dbAdd",
+      "table": "card_stacks",
+      "data": {
+        "student_user_id": "$auth.id",
+        "stack_name": "$input.stack_name",
+        "stack_slug": "$stack_slug",
+        "description": "$input.description",
+        "cover_image_url": "$input.cover_image_url",
+        "theme_color": "$input.theme_color",
+        "visibility": "$input.visibility",
+        "is_default": "$input.is_default",
+        "display_order": "$next_order",
+        "view_count": 0
+      },
+      "output": "new_stack"
+    },
+    {
+      "method": "response",
+      "data": {
+        "success": true,
+        "stack": "$new_stack"
+      }
+    }
+  ]
+}

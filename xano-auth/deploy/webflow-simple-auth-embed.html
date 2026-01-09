@@ -1,0 +1,715 @@
+<!--
+  WEBFLOW + XANO COMPLETE AUTH & FORMS
+
+  Copy this entire code block into:
+  Project Settings > Custom Code > Footer Code
+
+  FEATURES:
+  - Login / Signup forms with show/hide password
+  - General Webflow form → Xano POST handling
+  - Auth state management (localStorage)
+  - Role-based visibility (data-role-visible)
+  - User data display (data-user-name, etc.)
+
+  SETUP:
+  1. Update XANO_API URL below
+  2. Set form action="" to your Xano endpoint
+  3. Use data-redirect="" for post-submit redirect
+-->
+
+<!-- Hyperscript for password toggle -->
+<script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
+
+<!-- jQuery (if not already loaded by Webflow) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!--
+  =============================================
+  WEBFLOW FORM → XANO HANDLER
+  =============================================
+  Works with any Webflow form. Just set:
+  - action="https://your-xano.io/api:GROUP/endpoint"
+  - method="POST" (or GET)
+  - data-redirect="/thank-you" (optional)
+-->
+<script>
+var Webflow = Webflow || [];
+Webflow.push(function() {
+  // Unbind default Webflow form handling
+  $(document).off('submit');
+
+  // Handle all forms EXCEPT auth forms (which have their own handlers)
+  $('form:not(#xano-login-form):not(#xano-signup-form)').submit(function(e) {
+    e.preventDefault();
+
+    const $form = $(this);
+    const $submit = $('[type=submit]', $form);
+    const buttonText = $submit.val();
+    const buttonWaitingText = $submit.attr('data-wait');
+    const formMethod = $form.attr('method') || 'POST';
+    const formAction = $form.attr('action');
+    const formRedirect = $form.attr('data-redirect');
+    const formData = $form.serialize();
+
+    // Skip if no action URL
+    if (!formAction) {
+      console.warn('Form has no action URL');
+      return;
+    }
+
+    // Set waiting text
+    if (buttonWaitingText) {
+      $submit.val(buttonWaitingText);
+    }
+    $submit.prop('disabled', true);
+
+    $.ajax(formAction, {
+      data: formData,
+      method: formMethod,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    })
+    .done((res) => {
+      // Redirect if set
+      if (formRedirect) {
+        window.location = formRedirect;
+        return;
+      }
+      // Show Webflow success message
+      $form
+        .hide()
+        .siblings('.w-form-done').show()
+        .siblings('.w-form-fail').hide();
+    })
+    .fail((res) => {
+      // Show Webflow error message
+      $form
+        .siblings('.w-form-done').hide()
+        .siblings('.w-form-fail').show();
+      console.error('Form submission failed:', res);
+    })
+    .always(() => {
+      $submit.val(buttonText);
+      $submit.prop('disabled', false);
+    });
+  });
+});
+</script>
+
+<style>
+  .xano-auth-container {
+    max-width: 400px;
+    margin: 2rem auto;
+    padding: 2rem;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+  .xano-auth-tabs {
+    display: flex;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid #e5e7eb;
+  }
+  .xano-auth-tab {
+    flex: 1;
+    padding: 0.75rem;
+    text-align: center;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-size: 1rem;
+    color: #6b7280;
+    transition: all 0.2s;
+  }
+  .xano-auth-tab.active {
+    color: #8B0000;
+    border-bottom: 2px solid #8B0000;
+    margin-bottom: -2px;
+  }
+  .xano-auth-form {
+    display: none;
+  }
+  .xano-auth-form.active {
+    display: block;
+  }
+  .xano-auth-field {
+    margin-bottom: 1rem;
+  }
+  .xano-auth-field label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #374151;
+  }
+  .xano-auth-field input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    font-size: 1rem;
+    box-sizing: border-box;
+  }
+  .xano-auth-field input:focus {
+    outline: none;
+    border-color: #8B0000;
+    box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.1);
+  }
+  .password-wrapper {
+    position: relative;
+  }
+  .password-wrapper input {
+    padding-right: 3rem;
+  }
+  .password-toggle {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.25rem;
+    opacity: 0.5;
+    padding: 0.25rem;
+    line-height: 1;
+  }
+  .password-toggle:hover {
+    opacity: 1;
+  }
+  .xano-auth-btn {
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    background: #8B0000;
+    color: white;
+    border: none;
+    border-radius: 0.375rem;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .xano-auth-btn:hover {
+    background: #6B0000;
+  }
+  .xano-auth-btn:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+  }
+  .xano-auth-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    margin-bottom: 1rem;
+    display: none;
+  }
+  .xano-auth-success {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #16a34a;
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    margin-bottom: 1rem;
+    display: none;
+  }
+  .xano-auth-user {
+    text-align: center;
+    padding: 2rem;
+  }
+  .xano-auth-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #8B0000;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin: 0 auto 1rem;
+  }
+  .xano-auth-logout {
+    margin-top: 1rem;
+    background: #6b7280;
+  }
+  .xano-auth-logout:hover {
+    background: #4b5563;
+  }
+</style>
+
+<!-- Auth Container -->
+<div class="xano-auth-container" id="xano-auth-widget">
+
+  <!-- Logged Out View -->
+  <div id="xano-logged-out">
+    <!-- Tabs -->
+    <div class="xano-auth-tabs">
+      <button class="xano-auth-tab active" onclick="showTab('login')">Sign In</button>
+      <button class="xano-auth-tab" onclick="showTab('signup')">Create Account</button>
+    </div>
+
+    <!-- Login Form -->
+    <form id="xano-login-form" class="xano-auth-form active" onsubmit="handleLogin(event)">
+      <div id="login-error" class="xano-auth-error"></div>
+
+      <div class="xano-auth-field">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" required placeholder="you@example.com">
+      </div>
+
+      <div class="xano-auth-field">
+        <label for="login-password">Password</label>
+        <div class="password-wrapper">
+          <input type="password" id="login-password" required placeholder="Enter password">
+          <button type="button" class="password-toggle"
+            _="on click
+               if #login-password.type is 'password'
+                 set #login-password.type to 'text'
+                 set my innerHTML to '🙈'
+               else
+                 set #login-password.type to 'password'
+                 set my innerHTML to '👁'"
+            aria-label="Show password">👁</button>
+        </div>
+      </div>
+
+      <button type="submit" class="xano-auth-btn" id="login-btn">Sign In</button>
+    </form>
+
+    <!-- Signup Form -->
+    <form id="xano-signup-form" class="xano-auth-form" onsubmit="handleSignup(event)">
+      <div id="signup-error" class="xano-auth-error"></div>
+      <div id="signup-success" class="xano-auth-success"></div>
+
+      <div class="xano-auth-field">
+        <label for="signup-email">Email</label>
+        <input type="email" id="signup-email" required placeholder="you@example.com">
+      </div>
+
+      <div class="xano-auth-field">
+        <label for="signup-first">First Name</label>
+        <input type="text" id="signup-first" required placeholder="John">
+      </div>
+
+      <div class="xano-auth-field">
+        <label for="signup-last">Last Name</label>
+        <input type="text" id="signup-last" required placeholder="Doe">
+      </div>
+
+      <div class="xano-auth-field">
+        <label for="signup-password">Password</label>
+        <div class="password-wrapper">
+          <input type="password" id="signup-password" required minlength="8" placeholder="Minimum 8 characters">
+          <button type="button" class="password-toggle"
+            _="on click
+               if #signup-password.type is 'password'
+                 set #signup-password.type to 'text'
+                 set my innerHTML to '🙈'
+               else
+                 set #signup-password.type to 'password'
+                 set my innerHTML to '👁'"
+            aria-label="Show password">👁</button>
+        </div>
+      </div>
+
+      <button type="submit" class="xano-auth-btn" id="signup-btn">Create Account</button>
+    </form>
+  </div>
+
+  <!-- Logged In View -->
+  <div id="xano-logged-in" style="display: none;">
+    <div class="xano-auth-user">
+      <div class="xano-auth-avatar" id="user-avatar">?</div>
+      <h2 id="user-name">Welcome!</h2>
+      <p id="user-email" style="color: #6b7280;"></p>
+      <p id="user-role" style="color: #8B0000; font-weight: 500;"></p>
+      <button class="xano-auth-btn xano-auth-logout" onclick="handleLogout()">Logout</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // =============================================
+  // CONFIGURATION - UPDATE THIS URL
+  // =============================================
+  const XANO_API = 'https://xerb-qpd6-hd8t.n7.xano.io/api:hJgoiIwh';
+  // =============================================
+
+  const STORAGE = {
+    TOKEN: 'xano_auth_token',
+    USER: 'xano_user'
+  };
+
+  // State
+  let state = { user: null, token: null };
+
+  // Load from storage
+  function loadState() {
+    try {
+      state.token = JSON.parse(localStorage.getItem(STORAGE.TOKEN));
+      state.user = JSON.parse(localStorage.getItem(STORAGE.USER));
+    } catch(e) {}
+    updateView();
+  }
+
+  // Save to storage
+  function saveState() {
+    localStorage.setItem(STORAGE.TOKEN, JSON.stringify(state.token));
+    localStorage.setItem(STORAGE.USER, JSON.stringify(state.user));
+  }
+
+  // Clear storage
+  function clearState() {
+    localStorage.removeItem(STORAGE.TOKEN);
+    localStorage.removeItem(STORAGE.USER);
+    state = { user: null, token: null };
+  }
+
+  // Update view based on auth state
+  function updateView() {
+    const loggedOut = document.getElementById('xano-logged-out');
+    const loggedIn = document.getElementById('xano-logged-in');
+
+    if (state.user) {
+      loggedOut.style.display = 'none';
+      loggedIn.style.display = 'block';
+
+      document.getElementById('user-name').textContent =
+        state.user.first_name + ' ' + state.user.last_name;
+      document.getElementById('user-email').textContent = state.user.email;
+      document.getElementById('user-role').textContent =
+        (state.user.role || 'user').replace('_', ' ');
+      document.getElementById('user-avatar').textContent =
+        (state.user.first_name || '?')[0].toUpperCase();
+    } else {
+      loggedOut.style.display = 'block';
+      loggedIn.style.display = 'none';
+    }
+  }
+
+  // Tab switching
+  window.showTab = function(tab) {
+    document.querySelectorAll('.xano-auth-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.xano-auth-form').forEach(f => f.classList.remove('active'));
+
+    if (tab === 'login') {
+      document.querySelector('.xano-auth-tab:first-child').classList.add('active');
+      document.getElementById('xano-login-form').classList.add('active');
+    } else {
+      document.querySelector('.xano-auth-tab:last-child').classList.add('active');
+      document.getElementById('xano-signup-form').classList.add('active');
+    }
+
+    // Clear errors
+    document.getElementById('login-error').style.display = 'none';
+    document.getElementById('signup-error').style.display = 'none';
+    document.getElementById('signup-success').style.display = 'none';
+  };
+
+  // API call helper
+  async function api(endpoint, method, body) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (state.token) {
+      headers['Authorization'] = 'Bearer ' + state.token;
+    }
+
+    const opts = { method, headers };
+    if (body) opts.body = JSON.stringify(body);
+
+    const res = await fetch(XANO_API + endpoint, opts);
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || 'Request failed');
+    }
+    return data;
+  }
+
+  // Handle Login
+  window.handleLogin = async function(e) {
+    e.preventDefault();
+
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    const errorEl = document.getElementById('login-error');
+    const btn = document.getElementById('login-btn');
+
+    errorEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Signing in...';
+
+    try {
+      const res = await api('/auth/login', 'POST', { email, password });
+      state.token = res.authToken;
+      state.user = res.user;
+      saveState();
+      updateView();
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+    }
+  };
+
+  // Handle Signup (Simple - no invite)
+  window.handleSignup = async function(e) {
+    e.preventDefault();
+
+    const email = document.getElementById('signup-email').value;
+    const password = document.getElementById('signup-password').value;
+    const first_name = document.getElementById('signup-first').value;
+    const last_name = document.getElementById('signup-last').value;
+
+    const errorEl = document.getElementById('signup-error');
+    const successEl = document.getElementById('signup-success');
+    const btn = document.getElementById('signup-btn');
+
+    errorEl.style.display = 'none';
+    successEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Creating account...';
+
+    try {
+      // Use simple signup (no invite token)
+      const res = await api('/auth/signup-simple', 'POST', {
+        email,
+        password,
+        first_name,
+        last_name
+      });
+
+      state.token = res.authToken;
+      state.user = res.user;
+      saveState();
+      updateView();
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Create Account';
+    }
+  };
+
+  // Handle Logout
+  window.handleLogout = async function() {
+    try {
+      await api('/auth/logout', 'POST', null);
+    } catch(e) {}
+    clearState();
+    updateView();
+  };
+
+  // Initialize on load
+  loadState();
+
+  // Validate token with /auth/me
+  if (state.token) {
+    api('/auth/me', 'GET').then(res => {
+      state.user = res.user;
+      saveState();
+      updateView();
+      updateVisibility();
+    }).catch(() => {
+      clearState();
+      updateView();
+      updateVisibility();
+    });
+  } else {
+    updateVisibility();
+  }
+
+  // ============================================
+  // VISIBILITY HELPERS
+  // ============================================
+
+  function updateVisibility() {
+    const isLoggedIn = !!state.user;
+
+    // .auth---visible: show only when logged IN
+    document.querySelectorAll('.auth---visible').forEach(el => {
+      el.style.display = isLoggedIn ? '' : 'none';
+    });
+
+    // .auth---invisible: show only when logged OUT
+    document.querySelectorAll('.auth---invisible').forEach(el => {
+      el.style.display = isLoggedIn ? 'none' : '';
+    });
+
+    // [data-role-visible="student,instructor"]
+    document.querySelectorAll('[data-role-visible]').forEach(el => {
+      const roles = el.dataset.roleVisible.split(',').map(r => r.trim());
+      const show = state.user && roles.includes(state.user.role);
+      el.style.display = show ? '' : 'none';
+    });
+
+    // [data-user-name], [data-user-email], etc.
+    if (state.user) {
+      document.querySelectorAll('[data-user-name]').forEach(el => {
+        el.textContent = state.user.first_name + ' ' + state.user.last_name;
+      });
+      document.querySelectorAll('[data-user-first-name]').forEach(el => {
+        el.textContent = state.user.first_name;
+      });
+      document.querySelectorAll('[data-user-email]').forEach(el => {
+        el.textContent = state.user.email;
+      });
+      document.querySelectorAll('[data-user-role]').forEach(el => {
+        el.textContent = (state.user.sub_role || state.user.role || '').replace('_', ' ');
+      });
+      document.querySelectorAll('[data-user-avatar]').forEach(el => {
+        if (state.user.profile_image_url) el.src = state.user.profile_image_url;
+      });
+    }
+
+    // Protected page: body.auth---required
+    if (document.body.classList.contains('auth---required') && !isLoggedIn) {
+      sessionStorage.setItem('xano_redirect', window.location.href);
+      window.location.href = '/login';
+    }
+  }
+
+  // ============================================
+  // GLOBAL XANO AUTH API
+  // ============================================
+
+  window.XanoAuth = {
+    // Auth
+    login: async (email, password) => {
+      try {
+        const res = await api('/auth/login', 'POST', { email, password });
+        state.token = res.authToken;
+        state.user = res.user;
+        saveState();
+        updateView();
+        updateVisibility();
+        return { success: true, user: state.user };
+      } catch (err) {
+        return { success: false, error: err.message };
+      }
+    },
+    logout: async () => {
+      try { await api('/auth/logout', 'POST', null); } catch(e) {}
+      clearState();
+      updateView();
+      updateVisibility();
+      window.location.href = '/';
+    },
+    signup: async (data) => {
+      try {
+        const res = await api('/auth/signup-simple', 'POST', data);
+        state.token = res.authToken;
+        state.user = res.user;
+        saveState();
+        updateView();
+        updateVisibility();
+        return { success: true, user: state.user };
+      } catch (err) {
+        return { success: false, error: err.message };
+      }
+    },
+
+    // State
+    isAuthenticated: () => !!state.user,
+    getUser: () => state.user,
+    getToken: () => state.token,
+
+    // Role checks
+    isStudent: () => state.user?.role === 'student',
+    isInstructor: () => state.user?.role === 'instructor',
+    isAdmin: () => state.user?.role === 'admin',
+    isFamilyMember: () => state.user?.role === 'family_member',
+
+    // Helpers
+    getRedirectUrl: () => sessionStorage.getItem('xano_redirect') || '/dashboard',
+    clearRedirectUrl: () => sessionStorage.removeItem('xano_redirect'),
+
+    // Authenticated fetch for custom API calls
+    fetch: async (endpoint, method = 'GET', body = null) => {
+      return api(endpoint, method, body);
+    }
+  };
+
+})();
+</script>
+
+<!--
+  =============================================
+  AUTH-AWARE FORM SUBMISSIONS
+  =============================================
+  For forms that need the auth token, add: data-auth="true"
+  Example: <form action="/api/endpoint" data-auth="true">
+-->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Handle forms with data-auth="true"
+  document.querySelectorAll('form[data-auth="true"]').forEach(form => {
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const token = XanoAuth.getToken();
+      if (!token) {
+        alert('Please log in first');
+        window.location.href = '/login';
+        return;
+      }
+
+      const formData = new FormData(this);
+      const data = Object.fromEntries(formData.entries());
+      const action = this.getAttribute('action');
+      const method = this.getAttribute('method') || 'POST';
+      const redirect = this.getAttribute('data-redirect');
+
+      const submitBtn = this.querySelector('[type="submit"]');
+      const originalText = submitBtn?.textContent;
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = submitBtn.getAttribute('data-wait') || 'Submitting...';
+      }
+
+      try {
+        const res = await fetch(action, {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+          if (redirect) {
+            window.location.href = redirect;
+          } else {
+            this.style.display = 'none';
+            const successEl = this.parentElement.querySelector('.w-form-done');
+            if (successEl) successEl.style.display = 'block';
+          }
+        } else {
+          throw new Error(result.message || 'Submission failed');
+        }
+      } catch (err) {
+        const failEl = this.parentElement.querySelector('.w-form-fail');
+        if (failEl) {
+          failEl.style.display = 'block';
+          failEl.textContent = err.message;
+        }
+        console.error('Form error:', err);
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
+      }
+    });
+  });
+});
+</script>

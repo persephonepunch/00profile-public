@@ -1,0 +1,183 @@
+// ============================================================================
+// XANO TRIGGER: Auto-Sync Story to Webflow
+// ============================================================================
+// Type: Database Trigger (After Insert / After Update)
+// Table: stories
+// Description: Automatically syncs story to Webflow CMS when created or updated
+//
+// SETUP IN XANO:
+// 1. Go to Database → stories table → Triggers
+// 2. Create new trigger: "After Insert" and "After Update"
+// 3. Paste this code into the trigger function
+// ============================================================================
+
+// Get the story record that was just inserted/updated
+var story $trigger.new
+
+// Skip if story doesn't exist or is missing required fields
+precondition $story != null "No story data available" 400
+precondition $story.story_name != null && $story.story_name != "" "Story name required" 400
+
+// Only sync published stories (optional - remove if you want to sync drafts too)
+// conditional $story.status != "published"
+//   return { skipped: true, reason: "Story not published" }
+// endConditional
+
+// ========== ENVIRONMENT VARIABLES ==========
+var webflow_token $env.WEBFLOW_API_TOKEN
+var webflow_collection_id $env.WEBFLOW_COLLECTION_ID
+
+// Skip if Webflow not configured
+conditional $webflow_token == null || $webflow_token == "" || $webflow_collection_id == null || $webflow_collection_id == ""
+  return {
+    success: false,
+    error: "WEBFLOW_API_TOKEN or WEBFLOW_COLLECTION_ID not configured"
+  }
+endConditional
+
+// ========== GENERATE SLUG ==========
+var slug $story.story_name|lowercase|replace:" ":"-"|replace:"[^a-z0-9-]":""|truncate:100
+var slug $slug ~ "-" ~ $story.id
+
+// ========== BUILD WEBFLOW FIELD DATA ==========
+var webflow_fields {}
+var webflow_fields $webflow_fields|set:"name":$story.story_name
+var webflow_fields $webflow_fields|set:"slug":$slug
+var webflow_fields $webflow_fields|set:"_archived":false
+var webflow_fields $webflow_fields|set:"_draft":($story.status != "published")
+
+// Xano ID reference
+var xano_id_str $story.id|to_string
+var webflow_fields $webflow_fields|set:"xano-id":$xano_id_str
+
+// Story Content (body_html or story_content_html)
+var content_html $story.body_html
+conditional $content_html == null || $content_html == ""
+  var content_html $story.story_content_html
+endConditional
+conditional $content_html != null && $content_html != ""
+  var webflow_fields $webflow_fields|set:"story-content":$content_html
+endConditional
+
+// Excerpt
+conditional $story.story_input != null && $story.story_input != ""
+  var webflow_fields $webflow_fields|set:"excerpt":$story.story_input
+endConditional
+
+// Featured Image
+conditional $story.uploadcare_url != null && $story.uploadcare_url != ""
+  var featured_img {}
+  var featured_img $featured_img|set:"url":$story.uploadcare_url
+  var webflow_fields $webflow_fields|set:"featured-image":$featured_img
+endConditional
+
+// Author Name
+conditional $story.author_name != null && $story.author_name != ""
+  var webflow_fields $webflow_fields|set:"author-name":$story.author_name
+endConditional
+
+// Author Image
+conditional $story.author_photo != null && $story.author_photo != ""
+  var author_img {}
+  var author_img $author_img|set:"url":$story.author_photo
+  var webflow_fields $webflow_fields|set:"author-image":$author_img
+endConditional
+
+// Document File
+conditional $story.document_url != null && $story.document_url != ""
+  var doc_file {}
+  var doc_file $doc_file|set:"url":$story.document_url
+  var webflow_fields $webflow_fields|set:"document-file":$doc_file
+endConditional
+
+// Category
+conditional $story.category != null && $story.category != ""
+  var webflow_fields $webflow_fields|set:"category":$story.category
+endConditional
+
+// Read Time
+conditional $story.read_time != null
+  var webflow_fields $webflow_fields|set:"read-time":$story.read_time
+endConditional
+
+// Published Date
+conditional $story.published_date != null
+  var webflow_fields $webflow_fields|set:"published-date":$story.published_date
+endConditional
+
+// Build request body
+var request_body {}
+var request_body $request_body|set:"fieldData":$webflow_fields
+
+// ========== DETERMINE CREATE OR UPDATE ==========
+var existing_webflow_id $story.webflow_item_id
+var is_update $existing_webflow_id != null && $existing_webflow_id != ""
+
+// ========== MAKE WEBFLOW API REQUEST ==========
+var webflow_response null
+
+conditional $is_update == true
+  // UPDATE existing Webflow item (PATCH)
+  var webflow_url "https://api.webflow.com/v2/collections/" ~ $webflow_collection_id ~ "/items/" ~ $existing_webflow_id
+
+  var webflow_response external_api_request {
+    url: $webflow_url,
+    method: "PATCH",
+    headers: {
+      "Authorization": "Bearer " ~ $webflow_token,
+      "Content-Type": "application/json"
+    },
+    body: $request_body
+  }
+endConditional
+
+conditional $is_update == false
+  // CREATE new Webflow item (POST)
+  var webflow_url "https://api.webflow.com/v2/collections/" ~ $webflow_collection_id ~ "/items"
+
+  var webflow_response external_api_request {
+    url: $webflow_url,
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer " ~ $webflow_token,
+      "Content-Type": "application/json"
+    },
+    body: $request_body
+  }
+endConditional
+
+// ========== PROCESS RESPONSE ==========
+var response_body $webflow_response.response.result
+
+// Handle timeout/connection error
+conditional $response_body == false
+  return {
+    success: false,
+    story_id: $story.id,
+    error: "Webflow API timeout or connection error"
+  }
+endConditional
+
+// Handle success - update Xano record with Webflow ID
+conditional $response_body.id != null
+  var updated stories|edit:$story.id:{
+    webflow_item_id: $response_body.id,
+    webflow_synced_at: now,
+    updated_at: now
+  }
+
+  return {
+    success: true,
+    story_id: $story.id,
+    webflow_item_id: $response_body.id,
+    action: $is_update == true ? "updated" : "created",
+    synced_at: now
+  }
+endConditional
+
+// Handle API error
+return {
+  success: false,
+  story_id: $story.id,
+  error: $response_body
+}

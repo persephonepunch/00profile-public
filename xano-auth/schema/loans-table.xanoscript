@@ -1,0 +1,90 @@
+{
+  "type": "table",
+  "name": "loans",
+  "description": "Student loan records for family member visibility",
+  "fields": [
+    {
+      "name": "id",
+      "type": "integer",
+      "primary_key": true,
+      "auto_increment": true
+    },
+    {
+      "name": "student_user_id",
+      "type": "integer",
+      "nullable": false,
+      "foreign_key": "users.id"
+    },
+    {
+      "name": "loan_name",
+      "type": "text",
+      "nullable": false
+    },
+    {
+      "name": "loan_type",
+      "type": "enum",
+      "values": ["federal", "private", "institutional", "family"],
+      "nullable": false
+    },
+    {
+      "name": "principal_amount",
+      "type": "decimal",
+      "nullable": false
+    },
+    {
+      "name": "interest_rate",
+      "type": "decimal",
+      "nullable": true
+    },
+    {
+      "name": "current_balance",
+      "type": "decimal",
+      "nullable": false
+    },
+    {
+      "name": "monthly_payment",
+      "type": "decimal",
+      "nullable": true
+    },
+    {
+      "name": "start_date",
+      "type": "date",
+      "nullable": true
+    },
+    {
+      "name": "expected_graduation_date",
+      "type": "date",
+      "nullable": true
+    },
+    {
+      "name": "status",
+      "type": "enum",
+      "values": ["active", "in_grace", "in_repayment", "paid_off", "defaulted"],
+      "nullable": false,
+      "default": "active"
+    },
+    {
+      "name": "servicer_name",
+      "type": "text",
+      "nullable": true
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp",
+      "nullable": false,
+      "default": "now"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp",
+      "nullable": false,
+      "default": "now"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "idx_loans_student",
+      "fields": ["student_user_id"]
+    }
+  ]
+}

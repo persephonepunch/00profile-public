@@ -1,0 +1,29 @@
+name: Sync Stories to Webflow
+
+on:
+  schedule:
+    # Run every 5 minutes
+    - cron: '*/5 * * * *'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run sync script
+        env:
+          XANO_API: https://xerb-qpd6-hd8t.n7.xano.io/api:pIN2vLYu
+          WEBFLOW_TOKEN: ${{ secrets.WEBFLOW_TOKEN }}
+          WEBFLOW_COLLECTION: ${{ secrets.WEBFLOW_COLLECTION }}
+        run: python scripts/auto-sync-webflow.py

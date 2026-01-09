@@ -1,0 +1,221 @@
+// Sync Stories to Webflow Endpoint - POST /stories/sync-webflow
+// Description: Fetch stories from Xano and sync them to a Webflow CMS collection
+// Requires: WEBFLOW_API_TOKEN and WEBFLOW_COLLECTION_ID environment variables
+
+// ========== INPUT PARAMETERS ==========
+// Optional: sync specific story by ID, or sync all unsynced stories
+var story_id $_POST.story_id
+var sync_all $_POST.sync_all
+var publish $_POST.publish
+
+// ========== ENVIRONMENT VARIABLES ==========
+var webflow_token $env.WEBFLOW_API_TOKEN
+var webflow_collection_id $env.WEBFLOW_COLLECTION_ID
+
+// ========== VALIDATION ==========
+precondition $webflow_token != "" && $webflow_token != null "WEBFLOW_API_TOKEN environment variable is required" 500
+precondition $webflow_collection_id != "" && $webflow_collection_id != null "WEBFLOW_COLLECTION_ID environment variable is required" 500
+
+// ========== DETERMINE WHICH STORIES TO SYNC ==========
+var stories_to_sync []
+
+conditional $story_id != null && $story_id != ""
+  // Sync single story
+  var single_story stories|get:$story_id
+  precondition $single_story != null "Story not found" 404
+  var stories_to_sync [$single_story]
+endConditional
+
+conditional $story_id == null || $story_id == ""
+  conditional $sync_all == "true" || $sync_all == true
+    // Sync all published stories
+    var stories_to_sync stories|query|where:"status":"published"|get
+  endConditional
+
+  conditional $sync_all != "true" && $sync_all != true
+    // Sync only stories without webflow_item_id (unsynced)
+    var stories_to_sync stories|query|where:"status":"published"|where:"webflow_item_id":null|get
+  endConditional
+endConditional
+
+// ========== SYNC EACH STORY TO WEBFLOW ==========
+var synced_count 0
+var failed_count 0
+var sync_results []
+
+forEach $stories_to_sync as $story
+  // Generate slug from story name
+  var slug $story.story_name|lowercase|replace:" ":"-"|replace:"[^a-z0-9-]":""|truncate:100
+  var slug $slug + "-" + $story.id
+
+  // Build Webflow field data
+  var webflow_fields {
+    name: $story.story_name,
+    slug: $slug,
+    _archived: false,
+    _draft: false
+  }
+
+  // Add optional fields if they exist
+  conditional $story.story_content_html != null
+    var webflow_fields $webflow_fields|set:"story-content":$story.story_content_html
+  endConditional
+
+  conditional $story.story_email != null
+    var webflow_fields $webflow_fields|set:"author-email":$story.story_email
+  endConditional
+
+  // Excerpt (story_input)
+  conditional $story.story_input != null
+    var webflow_fields $webflow_fields|set:"excerpt":$story.story_input
+  endConditional
+
+  // Featured Image
+  conditional $story.uploadcare_url != null && $story.uploadcare_url != ""
+    var webflow_fields $webflow_fields|set:"featured-image":{url: $story.uploadcare_url}
+  endConditional
+
+  // Category
+  conditional $story.category != null
+    var webflow_fields $webflow_fields|set:"category":$story.category
+  endConditional
+
+  // Featured flag
+  conditional $story.featured != null
+    var webflow_fields $webflow_fields|set:"featured":$story.featured
+  endConditional
+
+  // Author Bio
+  conditional $story.author_bio != null
+    var webflow_fields $webflow_fields|set:"author-bio":$story.author_bio
+  endConditional
+
+  // Author Image
+  conditional $story.author_photo != null && $story.author_photo != ""
+    var webflow_fields $webflow_fields|set:"author-image":{url: $story.author_photo}
+  endConditional
+
+  // Document URL (Word, PPT, PDF)
+  conditional $story.document_url != null && $story.document_url != ""
+    var webflow_fields $webflow_fields|set:"document-file":{url: $story.document_url}
+  endConditional
+
+  // Video URL
+  conditional $story.video_url != null
+    var webflow_fields $webflow_fields|set:"video-url":$story.video_url
+  endConditional
+
+  // Author Name (use author_name if available, fallback to story_name)
+  conditional $story.author_name != null && $story.author_name != ""
+    var webflow_fields $webflow_fields|set:"author-name":$story.author_name
+  endConditional
+  conditional ($story.author_name == null || $story.author_name == "") && $story.story_name != null
+    var webflow_fields $webflow_fields|set:"author-name":$story.story_name
+  endConditional
+
+  // Author Email
+  conditional $story.story_email != null
+    var webflow_fields $webflow_fields|set:"author-email":$story.story_email
+  endConditional
+
+  // Xano ID for reference
+  var xano_id_str $story.id|to_string
+  var webflow_fields $webflow_fields|set:"xano-id":$xano_id_str
+
+  // Build request body
+  var request_body {
+    fieldData: $webflow_fields
+  }
+
+  // Check if story already has a Webflow ID (update vs create)
+  conditional $story.webflow_item_id != null && $story.webflow_item_id != ""
+    // UPDATE existing Webflow item
+    var webflow_url "https://api.webflow.com/v2/collections/" + $webflow_collection_id + "/items/" + $story.webflow_item_id
+
+    var webflow_response http|patch:$webflow_url:{
+      headers: {
+        "Authorization": "Bearer " + $webflow_token,
+        "Content-Type": "application/json"
+      },
+      body: $request_body
+    }
+  endConditional
+
+  conditional $story.webflow_item_id == null || $story.webflow_item_id == ""
+    // CREATE new Webflow item
+    var webflow_url "https://api.webflow.com/v2/collections/" + $webflow_collection_id + "/items"
+
+    var webflow_response http|post:$webflow_url:{
+      headers: {
+        "Authorization": "Bearer " + $webflow_token,
+        "Content-Type": "application/json"
+      },
+      body: $request_body
+    }
+  endConditional
+
+  // Process response
+  conditional $webflow_response.id != null
+    // Success - save Webflow item ID back to Xano
+    var updated stories|edit:$story.id:{
+      webflow_item_id: $webflow_response.id,
+      webflow_synced_at: now,
+      updated_at: now
+    }
+
+    var synced_count $synced_count + 1
+    var sync_results $sync_results|push:{
+      story_id: $story.id,
+      story_name: $story.story_name,
+      webflow_item_id: $webflow_response.id,
+      status: "success"
+    }
+  endConditional
+
+  conditional $webflow_response.id == null
+    // Failed
+    var failed_count $failed_count + 1
+    var sync_results $sync_results|push:{
+      story_id: $story.id,
+      story_name: $story.story_name,
+      error: $webflow_response,
+      status: "failed"
+    }
+  endConditional
+endForEach
+
+// ========== OPTIONAL: PUBLISH COLLECTION ==========
+conditional ($publish == "true" || $publish == true) && $synced_count > 0
+  var publish_url "https://api.webflow.com/v2/collections/" + $webflow_collection_id + "/items/publish"
+
+  // Get all synced item IDs
+  var item_ids []
+  forEach $sync_results as $result
+    conditional $result.status == "success"
+      var item_ids $item_ids|push:$result.webflow_item_id
+    endConditional
+  endForEach
+
+  var publish_response http|post:$publish_url:{
+    headers: {
+      "Authorization": "Bearer " + $webflow_token,
+      "Content-Type": "application/json"
+    },
+    body: {
+      itemIds: $item_ids
+    }
+  }
+endConditional
+
+// ========== RETURN RESPONSE ==========
+response {
+  success: true,
+  message: "Webflow sync completed",
+  summary: {
+    total_processed: $stories_to_sync|count,
+    synced: $synced_count,
+    failed: $failed_count,
+    published: $publish == "true" || $publish == true
+  },
+  results: $sync_results
+}

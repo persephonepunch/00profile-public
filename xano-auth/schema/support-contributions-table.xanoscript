@@ -1,0 +1,99 @@
+{
+  "type": "table",
+  "name": "support_contributions",
+  "description": "Contributions made to student support cards",
+  "fields": [
+    {
+      "name": "id",
+      "type": "integer",
+      "primary_key": true,
+      "auto_increment": true
+    },
+    {
+      "name": "support_card_id",
+      "type": "integer",
+      "nullable": false,
+      "foreign_key": "support_cards.id"
+    },
+    {
+      "name": "student_user_id",
+      "type": "integer",
+      "nullable": false,
+      "foreign_key": "users.id",
+      "description": "The student receiving the contribution"
+    },
+    {
+      "name": "contributor_user_id",
+      "type": "integer",
+      "nullable": true,
+      "foreign_key": "users.id",
+      "description": "If contributor is logged in (family member)"
+    },
+    {
+      "name": "contributor_name",
+      "type": "text",
+      "nullable": true,
+      "description": "Name if anonymous or not logged in"
+    },
+    {
+      "name": "contributor_email",
+      "type": "text",
+      "nullable": true
+    },
+    {
+      "name": "amount",
+      "type": "decimal",
+      "nullable": false
+    },
+    {
+      "name": "payment_method",
+      "type": "enum",
+      "values": ["stripe", "venmo", "paypal", "zelle", "cash", "other"],
+      "nullable": false
+    },
+    {
+      "name": "stripe_payment_intent_id",
+      "type": "text",
+      "nullable": true
+    },
+    {
+      "name": "status",
+      "type": "enum",
+      "values": ["pending", "completed", "failed", "refunded"],
+      "nullable": false,
+      "default": "pending"
+    },
+    {
+      "name": "message",
+      "type": "text",
+      "nullable": true,
+      "description": "Optional message from contributor"
+    },
+    {
+      "name": "is_anonymous",
+      "type": "boolean",
+      "nullable": false,
+      "default": false
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp",
+      "nullable": false,
+      "default": "now"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "idx_contributions_card",
+      "fields": ["support_card_id"]
+    },
+    {
+      "name": "idx_contributions_student",
+      "fields": ["student_user_id"]
+    },
+    {
+      "name": "idx_contributions_contributor",
+      "fields": ["contributor_user_id"]
+    }
+  ]
+}

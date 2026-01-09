@@ -1,0 +1,158 @@
+{
+  "type": "table",
+  "name": "support_cards",
+  "description": "Student-created fundraising cards with embedded Stripe Payment Links",
+  "fields": [
+    {
+      "name": "id",
+      "type": "integer",
+      "primary_key": true,
+      "auto_increment": true
+    },
+    {
+      "name": "student_user_id",
+      "type": "integer",
+      "nullable": false,
+      "foreign_key": "users.id"
+    },
+    {
+      "name": "card_title",
+      "type": "text",
+      "nullable": false,
+      "description": "e.g., Welcome Freshmen Gift, Education Fund"
+    },
+    {
+      "name": "card_subtitle",
+      "type": "text",
+      "nullable": true,
+      "description": "e.g., Subscribe and receive a Welcome Offer"
+    },
+    {
+      "name": "card_type",
+      "type": "enum",
+      "values": ["one_time", "subscription", "custom"],
+      "nullable": false,
+      "default": "one_time"
+    },
+    {
+      "name": "description",
+      "type": "text",
+      "nullable": true
+    },
+    {
+      "name": "price_amount",
+      "type": "decimal",
+      "nullable": true,
+      "description": "Display price e.g., 7.00"
+    },
+    {
+      "name": "price_recurring",
+      "type": "text",
+      "nullable": true,
+      "description": "e.g., every 2 months, monthly, one-time"
+    },
+    {
+      "name": "cta_text",
+      "type": "text",
+      "nullable": false,
+      "default": "Support Me",
+      "description": "Button text e.g., Send me a Smile, Buy me a Coffee"
+    },
+    {
+      "name": "stripe_embed_code",
+      "type": "text",
+      "nullable": true,
+      "description": "Full Stripe embed script/code from student"
+    },
+    {
+      "name": "stripe_payment_link",
+      "type": "text",
+      "nullable": true,
+      "description": "Stripe Payment Link URL"
+    },
+    {
+      "name": "stripe_buy_button_id",
+      "type": "text",
+      "nullable": true,
+      "description": "Stripe Buy Button ID for embed"
+    },
+    {
+      "name": "stripe_publishable_key",
+      "type": "text",
+      "nullable": true,
+      "description": "Student's Stripe publishable key"
+    },
+    {
+      "name": "venmo_username",
+      "type": "text",
+      "nullable": true
+    },
+    {
+      "name": "paypal_email",
+      "type": "text",
+      "nullable": true
+    },
+    {
+      "name": "card_images",
+      "type": "json",
+      "nullable": true,
+      "description": "Array of product images for carousel"
+    },
+    {
+      "name": "card_color",
+      "type": "text",
+      "nullable": true,
+      "default": "#8B0000",
+      "description": "Theme color (hex) for card styling"
+    },
+    {
+      "name": "payment_methods_shown",
+      "type": "json",
+      "nullable": true,
+      "default": "[\"visa\", \"mastercard\", \"amex\"]",
+      "description": "Payment method icons to display"
+    },
+    {
+      "name": "visibility",
+      "type": "enum",
+      "values": ["public", "family_only", "private"],
+      "nullable": false,
+      "default": "public",
+      "description": "Who can see this card"
+    },
+    {
+      "name": "is_active",
+      "type": "boolean",
+      "nullable": false,
+      "default": true
+    },
+    {
+      "name": "display_order",
+      "type": "integer",
+      "nullable": false,
+      "default": 0
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp",
+      "nullable": false,
+      "default": "now"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp",
+      "nullable": false,
+      "default": "now"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "idx_support_cards_student",
+      "fields": ["student_user_id"]
+    },
+    {
+      "name": "idx_support_cards_visibility",
+      "fields": ["student_user_id", "visibility", "is_active"]
+    }
+  ]
+}

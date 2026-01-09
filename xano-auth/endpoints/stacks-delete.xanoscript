@@ -1,0 +1,77 @@
+{
+  "type": "endpoint",
+  "name": "/stacks/{stack_id}",
+  "method": "DELETE",
+  "description": "Delete a card stack and all associated share links/permissions",
+  "authentication": "required",
+  "input": {
+    "stack_id": {"type": "integer", "required": true, "source": "path"}
+  },
+  "function_stack": [
+    {
+      "method": "requiresAuth"
+    },
+    {
+      "comment": "Get the stack"
+    },
+    {
+      "method": "dbGetSingle",
+      "table": "card_stacks",
+      "filter": {"id": "$input.stack_id"},
+      "output": "stack"
+    },
+    {
+      "comment": "Check ownership"
+    },
+    {
+      "method": "conditional",
+      "condition": "$stack.student_user_id != $auth.id",
+      "then": [
+        {
+          "method": "throw",
+          "code": 403,
+          "message": "You don't have permission to delete this stack"
+        }
+      ]
+    },
+    {
+      "comment": "Delete share permissions"
+    },
+    {
+      "method": "dbDeleteAll",
+      "table": "share_permissions",
+      "filter": {"stack_id": "$stack.id"}
+    },
+    {
+      "comment": "Delete share links"
+    },
+    {
+      "method": "dbDeleteAll",
+      "table": "share_links",
+      "filter": {"stack_id": "$stack.id"}
+    },
+    {
+      "comment": "Delete stack card associations"
+    },
+    {
+      "method": "dbDeleteAll",
+      "table": "stack_cards",
+      "filter": {"stack_id": "$stack.id"}
+    },
+    {
+      "comment": "Delete the stack"
+    },
+    {
+      "method": "dbDelete",
+      "table": "card_stacks",
+      "filter": {"id": "$stack.id"}
+    },
+    {
+      "method": "response",
+      "data": {
+        "success": true,
+        "message": "Stack deleted successfully"
+      }
+    }
+  ]
+}

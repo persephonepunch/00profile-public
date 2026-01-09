@@ -1,0 +1,86 @@
+# GitHub Pages Configuration for USC Story Generator Platform Documentation
+
+# Site Settings
+title: USC Story Generator Platform
+description: Modern student storytelling platform with community-driven endowments addressing federal funding loss
+author: University of South Carolina
+url: https://persephonepunch.github.io
+baseurl: /school-endowment
+
+# Theme
+theme: jekyll-theme-cayman
+# Alternative themes: jekyll-theme-minimal, jekyll-theme-slate, jekyll-theme-architect
+
+# Build Settings
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+# Plugins
+plugins:
+  - jekyll-relative-links
+  - jekyll-optional-front-matter
+  - jekyll-readme-index
+  - jekyll-default-layout
+  - jekyll-titles-from-headings
+
+# Plugin Configuration
+relative_links:
+  enabled: true
+  collections: false
+
+optional_front_matter:
+  remove_originals: false
+
+readme_index:
+  enabled: true
+  remove_originals: false
+
+titles_from_headings:
+  enabled: true
+  strip_title: false
+  collections: false
+
+# File Includes/Excludes
+include:
+  - README.md
+  - GIST.md
+  - GIST-SHORT.md
+  - GIST-MICRO.md
+  - prd.md
+  - prd-presentation.md
+  - sitemap.md
+  - executive-summary.md
+  - brief.md
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+      author: USC Story Generator Team
+
+# Social
+github_username: persephonepunch
+repository: persephonepunch/school-endowment
+
+# Navigation (if theme supports)
+navigation:
+  - title: Home
+    url: /
+  - title: Executive Summary
+    url: /executive-summary
+  - title: Presentation
+    url: /prd-presentation
+  - title: Full PRD
+    url: /prd
+  - title: Sitemap
+    url: /sitemap

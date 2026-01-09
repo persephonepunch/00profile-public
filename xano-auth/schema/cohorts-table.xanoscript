@@ -1,0 +1,70 @@
+{
+  "type": "table",
+  "name": "cohorts",
+  "description": "Class/cohort groupings for students and instructors",
+  "fields": [
+    {
+      "name": "id",
+      "type": "integer",
+      "primary_key": true,
+      "auto_increment": true
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "nullable": false
+    },
+    {
+      "name": "description",
+      "type": "text",
+      "nullable": true
+    },
+    {
+      "name": "academic_year",
+      "type": "text",
+      "nullable": true,
+      "description": "e.g., 2024-2025"
+    },
+    {
+      "name": "semester",
+      "type": "enum",
+      "values": ["fall", "spring", "summer"],
+      "nullable": true
+    },
+    {
+      "name": "start_date",
+      "type": "date",
+      "nullable": true
+    },
+    {
+      "name": "end_date",
+      "type": "date",
+      "nullable": true
+    },
+    {
+      "name": "status",
+      "type": "enum",
+      "values": ["upcoming", "active", "completed", "archived"],
+      "nullable": false,
+      "default": "upcoming"
+    },
+    {
+      "name": "created_by_user_id",
+      "type": "integer",
+      "nullable": false,
+      "foreign_key": "users.id"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp",
+      "nullable": false,
+      "default": "now"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp",
+      "nullable": false,
+      "default": "now"
+    }
+  ]
+}

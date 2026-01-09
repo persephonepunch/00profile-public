@@ -1,0 +1,279 @@
+{
+  "type": "endpoint",
+  "name": "/public/stacks/{student_slug}/{stack_slug}",
+  "method": "GET",
+  "description": "Get a specific public stack by student and stack slug",
+  "authentication": "none",
+  "input": {
+    "student_slug": {"type": "text", "required": true, "source": "path"},
+    "stack_slug": {"type": "text", "required": true, "source": "path"},
+    "t": {"type": "text", "required": false, "source": "query", "description": "Share link token"},
+    "p": {"type": "text", "required": false, "source": "query", "description": "Password for protected links"}
+  },
+  "function_stack": [
+    {
+      "comment": "Find user by slug"
+    },
+    {
+      "method": "dbGetAll",
+      "table": "users",
+      "output": "all_users"
+    },
+    {
+      "method": "var",
+      "name": "student",
+      "value": null
+    },
+    {
+      "method": "forEach",
+      "items": "$all_users",
+      "as": "user",
+      "do": [
+        {
+          "method": "var",
+          "name": "user_slug",
+          "value": "$user.first_name|slugify ~ '-' ~ $user.last_name|slugify"
+        },
+        {
+          "method": "conditional",
+          "condition": "$user_slug == $input.student_slug",
+          "then": [
+            {
+              "method": "var",
+              "name": "student",
+              "value": "$user"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "method": "conditional",
+      "condition": "$student == null",
+      "then": [
+        {
+          "method": "throw",
+          "code": 404,
+          "message": "Student not found"
+        }
+      ]
+    },
+    {
+      "comment": "Get the specific stack"
+    },
+    {
+      "method": "dbGetAll",
+      "table": "card_stacks",
+      "filter": {"student_user_id": "$student.id", "stack_slug": "$input.stack_slug"},
+      "output": "stacks"
+    },
+    {
+      "method": "conditional",
+      "condition": "$stacks|length == 0",
+      "then": [
+        {
+          "method": "throw",
+          "code": 404,
+          "message": "Stack not found"
+        }
+      ]
+    },
+    {
+      "method": "var",
+      "name": "stack",
+      "value": "$stacks[0]"
+    },
+    {
+      "comment": "Check visibility and access"
+    },
+    {
+      "method": "var",
+      "name": "has_access",
+      "value": false
+    },
+    {
+      "method": "conditional",
+      "condition": "$stack.visibility == 'public'",
+      "then": [
+        {
+          "method": "var",
+          "name": "has_access",
+          "value": true
+        }
+      ]
+    },
+    {
+      "comment": "Check share link token for unlisted/password/time_limited"
+    },
+    {
+      "method": "conditional",
+      "condition": "$input.t != null && $has_access == false",
+      "then": [
+        {
+          "method": "dbGetAll",
+          "table": "share_links",
+          "filter": {"stack_id": "$stack.id", "link_token": "$input.t", "is_active": true},
+          "output": "share_links"
+        },
+        {
+          "method": "conditional",
+          "condition": "$share_links|length > 0",
+          "then": [
+            {
+              "method": "var",
+              "name": "link",
+              "value": "$share_links[0]"
+            },
+            {
+              "comment": "Check expiration"
+            },
+            {
+              "method": "conditional",
+              "condition": "$link.expires_at != null && $link.expires_at < $timestamp",
+              "then": [
+                {
+                  "method": "throw",
+                  "code": 403,
+                  "message": "This share link has expired"
+                }
+              ]
+            },
+            {
+              "comment": "Check max views"
+            },
+            {
+              "method": "conditional",
+              "condition": "$link.max_views != null && $link.current_views >= $link.max_views",
+              "then": [
+                {
+                  "method": "throw",
+                  "code": 403,
+                  "message": "This share link has reached its view limit"
+                }
+              ]
+            },
+            {
+              "comment": "Check password if required"
+            },
+            {
+              "method": "conditional",
+              "condition": "$link.link_type == 'password'",
+              "then": [
+                {
+                  "method": "conditional",
+                  "condition": "$input.p == null",
+                  "then": [
+                    {
+                      "method": "response",
+                      "data": {
+                        "requires_password": true,
+                        "stack_name": "$stack.stack_name"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "method": "conditional",
+                  "condition": "!verifyPassword($input.p, $link.password_hash)",
+                  "then": [
+                    {
+                      "method": "throw",
+                      "code": 403,
+                      "message": "Incorrect password"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "method": "var",
+              "name": "has_access",
+              "value": true
+            },
+            {
+              "comment": "Increment view count"
+            },
+            {
+              "method": "dbEdit",
+              "table": "share_links",
+              "filter": {"id": "$link.id"},
+              "data": {"current_views": "$link.current_views + 1"}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "method": "conditional",
+      "condition": "$has_access == false",
+      "then": [
+        {
+          "method": "throw",
+          "code": 403,
+          "message": "You don't have access to this stack"
+        }
+      ]
+    },
+    {
+      "comment": "Get cards in the stack"
+    },
+    {
+      "method": "dbGetAll",
+      "table": "stack_cards",
+      "filter": {"stack_id": "$stack.id"},
+      "sort": [{"field": "display_order", "direction": "asc"}],
+      "output": "stack_card_links"
+    },
+    {
+      "method": "var",
+      "name": "cards",
+      "value": "[]"
+    },
+    {
+      "method": "forEach",
+      "items": "$stack_card_links",
+      "as": "link",
+      "do": [
+        {
+          "method": "dbGetSingle",
+          "table": "support_cards",
+          "filter": {"id": "$link.support_card_id", "is_active": true},
+          "output": "card",
+          "ignore_error": true
+        },
+        {
+          "method": "conditional",
+          "condition": "$card != null",
+          "then": [
+            {
+              "method": "arrayPush",
+              "array": "$cards",
+              "value": "$card"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "comment": "Increment stack view count"
+    },
+    {
+      "method": "dbEdit",
+      "table": "card_stacks",
+      "filter": {"id": "$stack.id"},
+      "data": {"view_count": "$stack.view_count + 1"}
+    },
+    {
+      "method": "response",
+      "data": {
+        "student": {
+          "first_name": "$student.first_name",
+          "last_name": "$student.last_name",
+          "profile_image_url": "$student.profile_image_url"
+        },
+        "stack": "$stack",
+        "cards": "$cards"
+      }
+    }
+  ]
+}

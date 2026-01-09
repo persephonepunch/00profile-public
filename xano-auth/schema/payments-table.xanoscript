@@ -1,0 +1,80 @@
+{
+  "type": "table",
+  "name": "payments",
+  "description": "Loan payment records",
+  "fields": [
+    {
+      "name": "id",
+      "type": "integer",
+      "primary_key": true,
+      "auto_increment": true
+    },
+    {
+      "name": "loan_id",
+      "type": "integer",
+      "nullable": false,
+      "foreign_key": "loans.id"
+    },
+    {
+      "name": "student_user_id",
+      "type": "integer",
+      "nullable": false,
+      "foreign_key": "users.id"
+    },
+    {
+      "name": "amount",
+      "type": "decimal",
+      "nullable": false
+    },
+    {
+      "name": "payment_date",
+      "type": "date",
+      "nullable": false
+    },
+    {
+      "name": "payment_type",
+      "type": "enum",
+      "values": ["scheduled", "extra", "family_contribution"],
+      "nullable": false,
+      "default": "scheduled"
+    },
+    {
+      "name": "source",
+      "type": "text",
+      "nullable": true,
+      "description": "e.g., bank_transfer, family:father"
+    },
+    {
+      "name": "status",
+      "type": "enum",
+      "values": ["pending", "completed", "failed", "refunded"],
+      "nullable": false,
+      "default": "pending"
+    },
+    {
+      "name": "notes",
+      "type": "text",
+      "nullable": true
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp",
+      "nullable": false,
+      "default": "now"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "idx_payments_loan",
+      "fields": ["loan_id"]
+    },
+    {
+      "name": "idx_payments_student",
+      "fields": ["student_user_id"]
+    },
+    {
+      "name": "idx_payments_date",
+      "fields": ["payment_date"]
+    }
+  ]
+}

@@ -1,0 +1,697 @@
+<!--
+  SIGNUP FORM EMBED FOR WEBFLOW
+
+  HOW TO USE:
+  1. In Webflow, create an Embed element where you want the form
+  2. Copy this entire code block
+  3. Paste into the Embed element
+
+  OR for page-level:
+  1. Go to Page Settings > Custom Code > Before </body>
+  2. Paste this entire code
+
+  CUSTOMIZE:
+  - Update colors in the <style> section
+  - Change XANO_API_URL below
+  - Set allowSignupWithoutInvite = true for development
+-->
+
+<div id="signup-widget">
+  <!-- Invite Info Banner -->
+  <div id="invite-info" class="invite-banner" style="display: none;">
+    <div class="invite-badge">Invited by</div>
+    <div id="invited-by-name" class="inviter-name"></div>
+    <div id="invite-role" class="invite-role"></div>
+  </div>
+
+  <!-- Signup Form -->
+  <form id="signup-form" class="signup-form">
+    <!-- Error Message -->
+    <div id="form-error" class="form-error" style="display: none;">
+      <span id="error-message"></span>
+    </div>
+
+    <!-- Name Row -->
+    <div class="form-row">
+      <div class="form-group">
+        <label for="first_name">First Name</label>
+        <input type="text" id="first_name" name="first_name" required placeholder="John">
+      </div>
+      <div class="form-group">
+        <label for="last_name">Last Name</label>
+        <input type="text" id="last_name" name="last_name" required placeholder="Doe">
+      </div>
+    </div>
+
+    <!-- Email -->
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required placeholder="john@example.com">
+    </div>
+
+    <!-- Password -->
+    <div class="form-group">
+      <label for="password">Password</label>
+      <div class="password-wrapper">
+        <input type="password" id="password" name="password" required placeholder="Minimum 8 characters">
+        <button type="button" class="password-toggle" tabindex="-1">Show</button>
+      </div>
+      <div class="password-strength"></div>
+    </div>
+
+    <!-- Confirm Password -->
+    <div class="form-group">
+      <label for="password_confirm">Confirm Password</label>
+      <input type="password" id="password_confirm" name="password_confirm" required placeholder="Re-enter password">
+    </div>
+
+    <!-- Phone (Optional) -->
+    <div class="form-group">
+      <label for="phone">Phone <span class="optional">(optional)</span></label>
+      <input type="tel" id="phone" name="phone" placeholder="(555) 123-4567">
+    </div>
+
+    <!-- Terms -->
+    <div class="form-group checkbox-group">
+      <label class="checkbox-label">
+        <input type="checkbox" id="terms" data-terms-required>
+        <span>I agree to the <a href="/terms" target="_blank">Terms of Service</a> and <a href="/privacy" target="_blank">Privacy Policy</a></span>
+      </label>
+    </div>
+
+    <!-- Submit Button -->
+    <button type="submit" id="signup-submit" class="submit-btn">Create Account</button>
+
+    <!-- Footer -->
+    <div class="form-footer">
+      Already have an account? <a href="/login">Sign in</a>
+    </div>
+  </form>
+
+  <!-- Loading State -->
+  <div id="signup-loading" class="loading-state" style="display: none;">
+    <div class="spinner"></div>
+    <p>Creating your account...</p>
+  </div>
+
+  <!-- Success State -->
+  <div id="signup-success" class="success-state" style="display: none;">
+    <div class="success-icon">✓</div>
+    <h2>Welcome!</h2>
+    <p>Your account has been created successfully.</p>
+    <p class="redirect-text">Redirecting to dashboard...</p>
+  </div>
+
+  <!-- Invalid Invite -->
+  <div id="invalid-invite" class="invalid-state" style="display: none;">
+    <div class="error-icon">!</div>
+    <h2>Invalid Invite</h2>
+    <p id="invalid-invite-message">This invite link is invalid or expired.</p>
+    <a href="/contact" class="request-link">Request a new invite</a>
+  </div>
+</div>
+
+<style>
+  /* ====================================
+     SIGNUP WIDGET STYLES
+     ==================================== */
+
+  #signup-widget {
+    max-width: 420px;
+    margin: 0 auto;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  }
+
+  /* Form Layout */
+  .signup-form {
+    background: #fff;
+    padding: 32px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  .form-row {
+    display: flex;
+    gap: 16px;
+  }
+
+  .form-row .form-group {
+    flex: 1;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 6px;
+  }
+
+  .form-group .optional {
+    color: #9ca3af;
+    font-weight: 400;
+  }
+
+  .form-group input[type="text"],
+  .form-group input[type="email"],
+  .form-group input[type="password"],
+  .form-group input[type="tel"] {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 15px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+  }
+
+  .form-group input:focus {
+    outline: none;
+    border-color: #8B0000;
+    box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.1);
+  }
+
+  .form-group input.error {
+    border-color: #ef4444;
+  }
+
+  .form-group input[readonly] {
+    background: #f9fafb;
+    color: #6b7280;
+    cursor: not-allowed;
+  }
+
+  /* Password Field */
+  .password-wrapper {
+    position: relative;
+  }
+
+  .password-wrapper input {
+    padding-right: 60px;
+  }
+
+  .password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #6b7280;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+
+  .password-toggle:hover {
+    color: #374151;
+  }
+
+  /* Password Strength */
+  .password-strength {
+    font-size: 12px;
+    margin-top: 6px;
+    height: 16px;
+  }
+
+  .password-strength.weak { color: #ef4444; }
+  .password-strength.fair { color: #f59e0b; }
+  .password-strength.good { color: #10b981; }
+  .password-strength.strong { color: #059669; }
+
+  /* Checkbox */
+  .checkbox-group {
+    margin-top: 24px;
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #6b7280;
+  }
+
+  .checkbox-label input {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    accent-color: #8B0000;
+  }
+
+  .checkbox-label a {
+    color: #8B0000;
+    text-decoration: none;
+  }
+
+  .checkbox-label a:hover {
+    text-decoration: underline;
+  }
+
+  /* Submit Button */
+  .submit-btn {
+    width: 100%;
+    padding: 14px 24px;
+    background: #8B0000;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 8px;
+  }
+
+  .submit-btn:hover {
+    background: #6B0000;
+  }
+
+  .submit-btn:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+  }
+
+  /* Form Footer */
+  .form-footer {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 14px;
+    color: #6b7280;
+  }
+
+  .form-footer a {
+    color: #8B0000;
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .form-footer a:hover {
+    text-decoration: underline;
+  }
+
+  /* Error Message */
+  .form-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    padding: 12px 14px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+  }
+
+  /* Invite Banner */
+  .invite-banner {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+
+  .invite-badge {
+    display: inline-block;
+    background: #8B0000;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+
+  .inviter-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #166534;
+    margin-bottom: 4px;
+  }
+
+  .invite-role {
+    font-size: 14px;
+    color: #15803d;
+  }
+
+  /* Loading State */
+  .loading-state {
+    text-align: center;
+    padding: 60px 20px;
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e5e7eb;
+    border-top-color: #8B0000;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .loading-state p {
+    color: #6b7280;
+    font-size: 15px;
+  }
+
+  /* Success State */
+  .success-state {
+    text-align: center;
+    padding: 60px 20px;
+  }
+
+  .success-icon {
+    width: 64px;
+    height: 64px;
+    background: #10b981;
+    color: white;
+    font-size: 32px;
+    font-weight: bold;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+  }
+
+  .success-state h2 {
+    color: #166534;
+    margin-bottom: 8px;
+  }
+
+  .success-state p {
+    color: #6b7280;
+    margin: 0;
+  }
+
+  .redirect-text {
+    font-size: 14px;
+    margin-top: 16px !important;
+  }
+
+  /* Invalid State */
+  .invalid-state {
+    text-align: center;
+    padding: 60px 20px;
+  }
+
+  .error-icon {
+    width: 64px;
+    height: 64px;
+    background: #fef2f2;
+    color: #dc2626;
+    font-size: 32px;
+    font-weight: bold;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    border: 2px solid #fecaca;
+  }
+
+  .invalid-state h2 {
+    color: #dc2626;
+    margin-bottom: 8px;
+  }
+
+  .invalid-state p {
+    color: #6b7280;
+  }
+
+  .request-link {
+    display: inline-block;
+    margin-top: 16px;
+    color: #8B0000;
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .request-link:hover {
+    text-decoration: underline;
+  }
+
+  /* Shake Animation */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+
+  .shake {
+    animation: shake 0.3s ease-in-out;
+  }
+
+  /* Mobile Responsive */
+  @media (max-width: 480px) {
+    .signup-form {
+      padding: 24px 20px;
+    }
+
+    .form-row {
+      flex-direction: column;
+      gap: 0;
+    }
+  }
+</style>
+
+<script>
+(function() {
+  'use strict';
+
+  // ============================================
+  // CONFIGURATION - UPDATE THESE
+  // ============================================
+  const XANO_API_URL = 'https://xerb-qpd6-hd8t.n7.xano.io/api:hJgoiIwh';
+  const allowSignupWithoutInvite = false; // Set true for development
+  const redirectDelay = 2000;
+  // ============================================
+
+  const $ = (s) => document.querySelector(s);
+  const show = (s) => { const el = $(s); if (el) el.style.display = ''; };
+  const hide = (s) => { const el = $(s); if (el) el.style.display = 'none'; };
+
+  let inviteToken = null;
+  let inviteData = null;
+
+  // API call
+  async function api(endpoint, method = 'GET', body = null, token = null) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+
+    const opts = { method, headers };
+    if (body) opts.body = JSON.stringify(body);
+
+    const res = await fetch(XANO_API_URL + endpoint, opts);
+    const data = await res.json();
+
+    if (!res.ok) {
+      const err = new Error(data.message || 'Request failed');
+      err.code = data.code;
+      throw err;
+    }
+    return data;
+  }
+
+  // Show error
+  function showError(msg) {
+    $('#error-message').textContent = msg;
+    show('#form-error');
+    $('#signup-form').classList.add('shake');
+    setTimeout(() => $('#signup-form').classList.remove('shake'), 300);
+  }
+
+  // Set loading
+  function setLoading(loading) {
+    const btn = $('#signup-submit');
+    btn.disabled = loading;
+    btn.textContent = loading ? 'Creating Account...' : 'Create Account';
+    if (loading) { hide('#signup-form'); show('#signup-loading'); }
+    else { show('#signup-form'); hide('#signup-loading'); }
+  }
+
+  // Validate invite
+  async function validateInvite(token) {
+    if (!token) return allowSignupWithoutInvite ? { valid: true } : { valid: false };
+    try {
+      return await api('/invites/validate', 'POST', { token });
+    } catch (e) {
+      return { valid: false, error: e.message };
+    }
+  }
+
+  // Show invite info
+  function showInviteInfo(invite, invitedBy) {
+    show('#invite-info');
+    if (invitedBy) {
+      $('#invited-by-name').textContent = invitedBy.first_name + ' ' + invitedBy.last_name;
+    }
+    const roles = { student: 'Student', instructor: 'Instructor', family_member: 'Family Member', admin: 'Administrator', sponsor: 'Sponsor' };
+    $('#invite-role').textContent = "You're joining as a " + (roles[invite.role] || invite.role);
+
+    if (invite.email) {
+      const emailInput = $('#email');
+      emailInput.value = invite.email;
+      emailInput.readOnly = true;
+    }
+  }
+
+  // Form submit
+  async function handleSubmit(e) {
+    e.preventDefault();
+    hide('#form-error');
+
+    const data = {
+      first_name: $('#first_name').value.trim(),
+      last_name: $('#last_name').value.trim(),
+      email: $('#email').value.trim(),
+      password: $('#password').value,
+      phone: $('#phone').value.trim()
+    };
+
+    // Validate
+    if (!data.first_name) { showError('First name is required'); return; }
+    if (!data.last_name) { showError('Last name is required'); return; }
+    if (!data.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) { showError('Valid email is required'); return; }
+    if (data.password.length < 8) { showError('Password must be at least 8 characters'); return; }
+    if (data.password !== $('#password_confirm').value) { showError('Passwords do not match'); return; }
+
+    const terms = $('#terms');
+    if (terms && !terms.checked) { showError('Please agree to the Terms of Service'); return; }
+
+    setLoading(true);
+
+    try {
+      let result;
+      if (inviteToken) {
+        result = await api('/auth/signup', 'POST', { invite_token: inviteToken, ...data });
+      } else if (allowSignupWithoutInvite) {
+        result = await api('/auth/signup-simple', 'POST', data);
+      } else {
+        showError('An invite is required to sign up');
+        setLoading(false);
+        return;
+      }
+
+      // Store auth
+      localStorage.setItem('xano_auth_token', JSON.stringify(result.authToken));
+      localStorage.setItem('xano_user', JSON.stringify(result.user));
+
+      // Show success
+      hide('#signup-loading');
+      show('#signup-success');
+
+      // Redirect
+      setTimeout(() => {
+        const redirect = sessionStorage.getItem('xano_redirect') || '/student/dashboard';
+        sessionStorage.removeItem('xano_redirect');
+        window.location.href = redirect;
+      }, redirectDelay);
+
+    } catch (e) {
+      const msgs = {
+        'INVALID_TOKEN': 'This invite link is invalid or expired.',
+        'TOKEN_USED': 'This invite has already been used.',
+        'TOKEN_EXPIRED': 'This invite has expired.',
+        'EMAIL_MISMATCH': "Email doesn't match the invite.",
+        'USER_EXISTS': 'An account with this email already exists.'
+      };
+      showError(msgs[e.code] || e.message || 'Signup failed');
+      setLoading(false);
+    }
+  }
+
+  // Password toggle
+  document.querySelectorAll('.password-toggle').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const input = this.previousElementSibling;
+      if (input.type === 'password') {
+        input.type = 'text';
+        this.textContent = 'Hide';
+      } else {
+        input.type = 'password';
+        this.textContent = 'Show';
+      }
+    });
+  });
+
+  // Password strength
+  $('#password').addEventListener('input', function() {
+    const p = this.value;
+    let s = 0;
+    if (p.length >= 8) s++;
+    if (p.length >= 12) s++;
+    if (/[a-z]/.test(p) && /[A-Z]/.test(p)) s++;
+    if (/\d/.test(p)) s++;
+    if (/[^a-zA-Z0-9]/.test(p)) s++;
+
+    const el = $('.password-strength');
+    if (!p) { el.textContent = ''; el.className = 'password-strength'; return; }
+    if (s <= 2) { el.textContent = 'Weak'; el.className = 'password-strength weak'; }
+    else if (s <= 3) { el.textContent = 'Fair'; el.className = 'password-strength fair'; }
+    else if (s <= 4) { el.textContent = 'Good'; el.className = 'password-strength good'; }
+    else { el.textContent = 'Strong'; el.className = 'password-strength strong'; }
+  });
+
+  // Init
+  async function init() {
+    // Check if already logged in
+    const existingUser = localStorage.getItem('xano_user');
+    if (existingUser) {
+      window.location.href = '/student/dashboard';
+      return;
+    }
+
+    // Get token from URL
+    const params = new URLSearchParams(window.location.search);
+    inviteToken = params.get('token');
+    const email = params.get('email');
+    if (email) $('#email').value = email;
+
+    // Validate invite
+    if (inviteToken) {
+      setLoading(true);
+      const validation = await validateInvite(inviteToken);
+
+      if (validation.valid && validation.invite) {
+        inviteData = validation.invite;
+        showInviteInfo(validation.invite, validation.invited_by);
+        setLoading(false);
+      } else if (!validation.valid) {
+        hide('#signup-form');
+        hide('#signup-loading');
+        $('#invalid-invite-message').textContent = validation.error || 'Invalid or expired invite link.';
+        show('#invalid-invite');
+        return;
+      } else {
+        setLoading(false);
+      }
+    } else if (!allowSignupWithoutInvite) {
+      hide('#signup-form');
+      $('#invalid-invite-message').textContent = 'An invite link is required to sign up.';
+      show('#invalid-invite');
+      return;
+    }
+
+    // Form handler
+    $('#signup-form').addEventListener('submit', handleSubmit);
+  }
+
+  // Start
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>

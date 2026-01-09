@@ -1,0 +1,171 @@
+{
+  "type": "endpoint",
+  "name": "/students/{student_id}/support-cards",
+  "method": "GET",
+  "description": "Get support cards for a student with visibility filtering based on viewer's access",
+  "authentication": "optional",
+  "inputs": [
+    {"name": "student_id", "type": "integer", "required": true},
+    {"name": "format", "type": "text", "required": false, "description": "json or html (for HTMX)"}
+  ],
+  "function_stack": [
+    {
+      "comment": "=== DETERMINE VIEWER ACCESS LEVEL ==="
+    },
+    {
+      "method": "var",
+      "name": "access_level",
+      "value": "public"
+    },
+    {
+      "method": "var",
+      "name": "viewer_id",
+      "value": null
+    },
+    {
+      "comment": "Check if authenticated"
+    },
+    {
+      "method": "conditional",
+      "condition": "$auth != null && $auth.id != null",
+      "then": [
+        {"method": "var", "name": "viewer_id", "value": "$auth.id"},
+        {
+          "method": "dbGetSingle",
+          "table": "users",
+          "filter": {"id": "$auth.id"},
+          "output": "viewer"
+        },
+        {
+          "comment": "Student viewing own cards = private access"
+        },
+        {
+          "method": "conditional",
+          "condition": "$viewer.id == $input.student_id",
+          "then": [
+            {"method": "var", "name": "access_level", "value": "private"}
+          ]
+        },
+        {
+          "comment": "Family member with relationship = family access"
+        },
+        {
+          "method": "conditional",
+          "condition": "$viewer.role == 'family_member' && $access_level != 'private'",
+          "then": [
+            {
+              "method": "dbQuery",
+              "table": "family_relationships",
+              "filter": {
+                "family_member_user_id": "$auth.id",
+                "student_user_id": "$input.student_id",
+                "status": "active"
+              },
+              "output": "family_rel"
+            },
+            {
+              "method": "conditional",
+              "condition": "$family_rel|length > 0",
+              "then": [
+                {"method": "var", "name": "access_level", "value": "family"}
+              ]
+            }
+          ]
+        },
+        {
+          "comment": "Admin = private access to all"
+        },
+        {
+          "method": "conditional",
+          "condition": "$viewer.role == 'admin'",
+          "then": [
+            {"method": "var", "name": "access_level", "value": "private"}
+          ]
+        }
+      ]
+    },
+    {
+      "comment": "=== BUILD VISIBILITY FILTER ==="
+    },
+    {
+      "method": "var",
+      "name": "visibility_filter",
+      "value": ["public"]
+    },
+    {
+      "method": "conditional",
+      "condition": "$access_level == 'family'",
+      "then": [
+        {"method": "var", "name": "visibility_filter", "value": ["public", "family_only"]}
+      ]
+    },
+    {
+      "method": "conditional",
+      "condition": "$access_level == 'private'",
+      "then": [
+        {"method": "var", "name": "visibility_filter", "value": ["public", "family_only", "private"]}
+      ]
+    },
+    {
+      "comment": "=== FETCH SUPPORT CARDS ==="
+    },
+    {
+      "method": "dbQuery",
+      "table": "support_cards",
+      "filter": {
+        "student_user_id": "$input.student_id",
+        "is_active": true,
+        "visibility": {"$in": "$visibility_filter"}
+      },
+      "sort": {"display_order": "asc"},
+      "output": "cards"
+    },
+    {
+      "comment": "=== RETURN JSON OR HTML ==="
+    },
+    {
+      "method": "conditional",
+      "condition": "$input.format == 'html'",
+      "then": [
+        {
+          "comment": "Return HTML partial for HTMX"
+        },
+        {
+          "method": "var",
+          "name": "html_output",
+          "value": ""
+        },
+        {
+          "method": "foreach",
+          "array": "$cards",
+          "as": "card",
+          "do": [
+            {
+              "method": "var",
+              "name": "card_html",
+              "value": "'<div class=\"support-card\" data-card-id=\"' ~ $card.id ~ '\" style=\"--card-color: ' ~ $card.card_color ~ '\">' ~\n  '<div class=\"support-card__header\">' ~\n    '<span class=\"support-card__title\">' ~ $card.card_title ~ '</span>' ~\n  '</div>' ~\n  '<h3 class=\"support-card__subtitle\">' ~ $card.card_subtitle ~ '</h3>' ~\n  '<div class=\"support-card__price\">' ~\n    '<span class=\"price\">$' ~ $card.price_amount ~ '</span>' ~\n    '<span class=\"recurring\">' ~ $card.price_recurring ~ '</span>' ~\n  '</div>' ~\n  '<div class=\"support-card__embed\">' ~ $card.stripe_embed_code ~ '</div>' ~\n  '<div class=\"support-card__footer\">' ~\n    '<span>Supported payment methods:</span>' ~\n    '<div class=\"payment-icons\"></div>' ~\n  '</div>' ~\n'</div>'"
+            },
+            {
+              "method": "var",
+              "name": "html_output",
+              "value": "$html_output ~ $card_html"
+            }
+          ]
+        },
+        {
+          "method": "responseHtml",
+          "data": "$html_output"
+        }
+      ],
+      "else": [
+        {
+          "method": "response",
+          "data": {
+            "access_level": "$access_level",
+            "cards": "$cards"
+          }
+        }
+      ]
+    }
+  ]
+}

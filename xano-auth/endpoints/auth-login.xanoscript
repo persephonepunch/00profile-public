@@ -1,0 +1,122 @@
+{
+  "type": "endpoint",
+  "name": "/auth/login",
+  "method": "POST",
+  "description": "Login with email and password",
+  "authentication": "none",
+  "rate_limit": "5/minute",
+  "inputs": [
+    {"name": "email", "type": "text", "required": true},
+    {"name": "password", "type": "text", "required": true}
+  ],
+  "function_stack": [
+    {
+      "comment": "=== INPUT VALIDATION ==="
+    },
+    {
+      "method": "precondition",
+      "args": ["$input.email != ''", "Email is required", 400]
+    },
+    {
+      "method": "precondition",
+      "args": ["$input.password != ''", "Password is required", 400]
+    },
+    {
+      "comment": "=== FIND USER ==="
+    },
+    {
+      "method": "dbGetSingle",
+      "table": "users",
+      "filter": {"email": "$input.email|lower"},
+      "output": "user"
+    },
+    {
+      "method": "conditional",
+      "condition": "$user == null",
+      "then": [
+        {"method": "throw", "code": "INVALID_CREDENTIALS", "message": "Invalid email or password", "status": 401}
+      ]
+    },
+    {
+      "comment": "=== CHECK USER STATUS ==="
+    },
+    {
+      "method": "conditional",
+      "condition": "$user.status == 'suspended'",
+      "then": [
+        {"method": "throw", "code": "ACCOUNT_SUSPENDED", "message": "Your account has been suspended. Please contact support.", "status": 403}
+      ]
+    },
+    {
+      "method": "conditional",
+      "condition": "$user.status == 'pending'",
+      "then": [
+        {"method": "throw", "code": "ACCOUNT_PENDING", "message": "Your account is pending activation", "status": 403}
+      ]
+    },
+    {
+      "method": "conditional",
+      "condition": "$user.status == 'inactive'",
+      "then": [
+        {"method": "throw", "code": "ACCOUNT_INACTIVE", "message": "Your account is inactive", "status": 403}
+      ]
+    },
+    {
+      "comment": "=== VERIFY PASSWORD ==="
+    },
+    {
+      "method": "verifyPassword",
+      "password": "$input.password",
+      "hash": "$user.password",
+      "output": "password_valid"
+    },
+    {
+      "method": "conditional",
+      "condition": "$password_valid == false",
+      "then": [
+        {"method": "throw", "code": "INVALID_CREDENTIALS", "message": "Invalid email or password", "status": 401}
+      ]
+    },
+    {
+      "comment": "=== UPDATE LAST LOGIN ==="
+    },
+    {
+      "method": "dbEdit",
+      "table": "users",
+      "filter": {"id": "$user.id"},
+      "data": {
+        "last_login_at": "now",
+        "updated_at": "now"
+      },
+      "output": "updated_user"
+    },
+    {
+      "comment": "=== CREATE AUTH TOKEN ==="
+    },
+    {
+      "method": "createAuthToken",
+      "table": "users",
+      "user_id": "$user.id",
+      "output": "auth_token"
+    },
+    {
+      "comment": "=== BUILD RESPONSE ==="
+    },
+    {
+      "method": "response",
+      "data": {
+        "success": true,
+        "authToken": "$auth_token",
+        "user": {
+          "id": "$user.id",
+          "email": "$user.email",
+          "role": "$user.role",
+          "sub_role": "$user.sub_role",
+          "first_name": "$user.first_name",
+          "last_name": "$user.last_name",
+          "profile_image_url": "$user.profile_image_url"
+        }
+      }
+    }
+  ]
+}

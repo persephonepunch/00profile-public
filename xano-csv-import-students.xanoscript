@@ -1,0 +1,167 @@
+// USC Student Stories CSV Import - POST /stories/import-students
+// Description: Import student stories from the specific CSV format used for USC profiles
+// Handles: Name, Slug, Draft, portrait, major, class, social links, bio, story, etc.
+
+// ========== INPUT ==========
+var csv_file $_FILES.csv_file
+var csv_data $_POST.csv_data
+var sync_to_webflow $_POST.sync_to_webflow
+var publish_status $_POST.publish_status
+
+// ========== SET DEFAULTS ==========
+conditional $publish_status == "" || $publish_status == null
+  var publish_status "published"
+endConditional
+
+// ========== PARSE CSV ==========
+var parsed_rows []
+
+conditional $csv_file != null
+  var csv_content $csv_file|readFile
+  var parsed_rows $csv_content|csvParse:{headers: true, skipEmptyLines: true}
+endConditional
+
+conditional $csv_data != null && $csv_data != ""
+  var parsed_rows $csv_data|csvParse:{headers: true, skipEmptyLines: true}
+endConditional
+
+precondition $parsed_rows|count > 0 "No data to import" 400
+
+// ========== PROCESS EACH ROW ==========
+var imported_count 0
+var skipped_count 0
+var failed_count 0
+var results []
+
+forEach $parsed_rows as $row
+  // Skip if no name
+  conditional $row.Name == "" || $row.Name == null
+    var failed_count $failed_count + 1
+    var results $results|push:{status: "failed", error: "Missing Name field"}
+    continue
+  endConditional
+
+  // Generate email from name if not provided (slug@usc.edu format)
+  var generated_email $row.Slug + "@usc.edu"
+  conditional $row.Slug == "" || $row.Slug == null
+    var name_slug $row.Name|lowercase|replace:" ":"-"|replace:"[^a-z0-9-]":""
+    var generated_email $name_slug + "@usc.edu"
+  endConditional
+
+  // Determine status from Draft column
+  var story_status $publish_status
+  conditional $row.Draft == "TRUE" || $row.Draft == "true" || $row.Draft == true
+    var story_status "draft"
+  endConditional
+
+  // Build social links object
+  var social_links {}
+  conditional $row.social1 != "" && $row.social1 != null
+    var social_links $social_links|set:"link1":$row.social1
+  endConditional
+  conditional $row.social2 != "" && $row.social2 != null
+    var social_links $social_links|set:"link2":$row.social2
+  endConditional
+  conditional $row.social3 != "" && $row.social3 != null
+    var social_links $social_links|set:"link3":$row.social3
+  endConditional
+  conditional $row.website != "" && $row.website != null
+    var social_links $social_links|set:"website":$row.website
+  endConditional
+  conditional $row.link1 != "" && $row.link1 != null
+    var social_links $social_links|set:"primary_link":$row.link1
+  endConditional
+
+  // Handle empty social links
+  conditional $social_links|keys|count == 0
+    var social_links null
+  endConditional
+
+  // Build story content - prefer 'story' column, fallback to 'text'
+  var content_html $row.story
+  conditional ($content_html == "" || $content_html == null) && $row.text != null
+    var content_html $row.text
+  endConditional
+
+  // Build excerpt from 'description' or 'bio'
+  var excerpt $row.description
+  conditional ($excerpt == "" || $excerpt == null) && $row.bio != null
+    var excerpt $row.bio
+  endConditional
+
+  // Handle privacy as featured (inverse)
+  var is_featured true
+  conditional $row.privacy == "TRUE" || $row.privacy == "true" || $row.privacy == true
+    var is_featured false
+  endConditional
+
+  // Check for existing record
+  var existing stories|query|where:"story_name":$row.Name|first
+
+  conditional $existing != null
+    var skipped_count $skipped_count + 1
+    var results $results|push:{
+      story_name: $row.Name,
+      status: "skipped",
+      reason: "Already exists",
+      existing_id: $existing.id
+    }
+    continue
+  endConditional
+
+  // Create story record
+  var story_data {
+    story_name: $row.Name,
+    story_email: $generated_email,
+    story_input: $excerpt,
+    story_content_html: $content_html,
+    uploadcare_url: $row.portrait,
+    category: $row.major,
+    author_bio: $row.bio,
+    author_social: $social_links,
+    featured: $is_featured,
+    status: $story_status,
+    story_tags: $row.class,
+    created_at: now,
+    updated_at: now,
+    view_count: 0
+  }
+
+  // Add additional info if present
+  conditional $row["additional info"] != "" && $row["additional info"] != null
+    var story_data $story_data|set:"story_tags":$row["additional info"]
+  endConditional
+
+  var new_story stories|add:$story_data
+
+  var imported_count $imported_count + 1
+  var results $results|push:{
+    story_id: $new_story.id,
+    story_name: $new_story.story_name,
+    status: "imported",
+    category: $new_story.category
+  }
+endForEach
+
+// ========== OPTIONAL: SYNC TO WEBFLOW ==========
+var webflow_result null
+conditional ($sync_to_webflow == "true" || $sync_to_webflow == true) && $imported_count > 0
+  var webflow_result {
+    triggered: true,
+    message: "Call POST /stories/sync-webflow to sync " + $imported_count + " stories to Webflow"
+  }
+endConditional
+
+// ========== RESPONSE ==========
+response {
+  success: true,
+  message: "Student stories import completed",
+  summary: {
+    total_rows: $parsed_rows|count,
+    imported: $imported_count,
+    skipped: $skipped_count,
+    failed: $failed_count
+  },
+  webflow_sync: $webflow_result,
+  results: $results
+}

@@ -1,0 +1,158 @@
+{
+  "type": "endpoint",
+  "name": "/stacks/{stack_id}",
+  "method": "PUT",
+  "description": "Update a card stack",
+  "authentication": "required",
+  "input": {
+    "stack_id": {"type": "integer", "required": true, "source": "path"},
+    "stack_name": {"type": "text", "required": false},
+    "description": {"type": "text", "required": false},
+    "cover_image_url": {"type": "text", "required": false},
+    "theme_color": {"type": "text", "required": false},
+    "visibility": {"type": "enum", "values": ["public", "unlisted", "private"], "required": false},
+    "is_default": {"type": "boolean", "required": false},
+    "display_order": {"type": "integer", "required": false}
+  },
+  "function_stack": [
+    {
+      "method": "requiresAuth"
+    },
+    {
+      "comment": "Get the stack"
+    },
+    {
+      "method": "dbGetSingle",
+      "table": "card_stacks",
+      "filter": {"id": "$input.stack_id"},
+      "output": "stack"
+    },
+    {
+      "comment": "Check ownership"
+    },
+    {
+      "method": "conditional",
+      "condition": "$stack.student_user_id != $auth.id",
+      "then": [
+        {
+          "method": "throw",
+          "code": 403,
+          "message": "You don't have permission to update this stack"
+        }
+      ]
+    },
+    {
+      "comment": "Build update data"
+    },
+    {
+      "method": "var",
+      "name": "update_data",
+      "value": {"updated_at": "$timestamp"}
+    },
+    {
+      "method": "conditional",
+      "condition": "$input.stack_name != null",
+      "then": [
+        {
+          "method": "var",
+          "name": "update_data.stack_name",
+          "value": "$input.stack_name"
+        },
+        {
+          "method": "var",
+          "name": "new_slug",
+          "value": "$input.stack_name|slugify"
+        },
+        {
+          "method": "dbGetAll",
+          "table": "card_stacks",
+          "filter": {"student_user_id": "$auth.id", "stack_slug": "$new_slug", "id|!=": "$stack.id"},
+          "output": "existing"
+        },
+        {
+          "method": "conditional",
+          "condition": "$existing|length > 0",
+          "then": [
+            {
+              "method": "var",
+              "name": "new_slug",
+              "value": "$new_slug ~ '-' ~ $stack.id"
+            }
+          ]
+        },
+        {
+          "method": "var",
+          "name": "update_data.stack_slug",
+          "value": "$new_slug"
+        }
+      ]
+    },
+    {
+      "method": "conditional",
+      "condition": "$input.description != null",
+      "then": [{"method": "var", "name": "update_data.description", "value": "$input.description"}]
+    },
+    {
+      "method": "conditional",
+      "condition": "$input.cover_image_url != null",
+      "then": [{"method": "var", "name": "update_data.cover_image_url", "value": "$input.cover_image_url"}]
+    },
+    {
+      "method": "conditional",
+      "condition": "$input.theme_color != null",
+      "then": [{"method": "var", "name": "update_data.theme_color", "value": "$input.theme_color"}]
+    },
+    {
+      "method": "conditional",
+      "condition": "$input.visibility != null",
+      "then": [{"method": "var", "name": "update_data.visibility", "value": "$input.visibility"}]
+    },
+    {
+      "method": "conditional",
+      "condition": "$input.display_order != null",
+      "then": [{"method": "var", "name": "update_data.display_order", "value": "$input.display_order"}]
+    },
+    {
+      "comment": "Handle is_default"
+    },
+    {
+      "method": "conditional",
+      "condition": "$input.is_default == true",
+      "then": [
+        {
+          "method": "dbEditAll",
+          "table": "card_stacks",
+          "filter": {"student_user_id": "$auth.id", "is_default": true, "id|!=": "$stack.id"},
+          "data": {"is_default": false}
+        },
+        {
+          "method": "var",
+          "name": "update_data.is_default",
+          "value": true
+        }
+      ]
+    },
+    {
+      "method": "conditional",
+      "condition": "$input.is_default == false",
+      "then": [{"method": "var", "name": "update_data.is_default", "value": false}]
+    },
+    {
+      "comment": "Update the stack"
+    },
+    {
+      "method": "dbEdit",
+      "table": "card_stacks",
+      "filter": {"id": "$stack.id"},
+      "data": "$update_data",
+      "output": "updated_stack"
+    },
+    {
+      "method": "response",
+      "data": {
+        "success": true,
+        "stack": "$updated_stack"
+      }
+    }
+  ]
+}

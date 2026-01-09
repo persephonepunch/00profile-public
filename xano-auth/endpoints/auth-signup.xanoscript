@@ -1,0 +1,204 @@
+{
+  "type": "endpoint",
+  "name": "/auth/signup",
+  "method": "POST",
+  "description": "Register a new user with an invite token",
+  "authentication": "none",
+  "rate_limit": "10/minute",
+  "inputs": [
+    {"name": "invite_token", "type": "text", "required": true},
+    {"name": "email", "type": "text", "required": true},
+    {"name": "password", "type": "text", "required": true},
+    {"name": "first_name", "type": "text", "required": true},
+    {"name": "last_name", "type": "text", "required": true},
+    {"name": "phone", "type": "text", "required": false}
+  ],
+  "function_stack": [
+    {
+      "comment": "=== INPUT VALIDATION ==="
+    },
+    {
+      "method": "precondition",
+      "args": ["$input.invite_token != ''", "Invite token is required", 400]
+    },
+    {
+      "method": "precondition",
+      "args": ["$input.email != ''", "Email is required", 400]
+    },
+    {
+      "method": "precondition",
+      "args": ["$input.password|length >= 8", "Password must be at least 8 characters", 400]
+    },
+    {
+      "method": "precondition",
+      "args": ["$input.first_name != ''", "First name is required", 400]
+    },
+    {
+      "method": "precondition",
+      "args": ["$input.last_name != ''", "Last name is required", 400]
+    },
+    {
+      "comment": "=== VALIDATE INVITE TOKEN ==="
+    },
+    {
+      "method": "dbGetSingle",
+      "table": "invites",
+      "filter": {"token": "$input.invite_token"},
+      "output": "invite"
+    },
+    {
+      "method": "conditional",
+      "condition": "$invite == null",
+      "then": [
+        {"method": "throw", "code": "INVALID_TOKEN", "message": "Invalid or expired invite token", "status": 400}
+      ]
+    },
+    {
+      "method": "conditional",
+      "condition": "$invite.status != 'pending'",
+      "then": [
+        {"method": "throw", "code": "TOKEN_USED", "message": "This invite has already been used", "status": 400}
+      ]
+    },
+    {
+      "method": "conditional",
+      "condition": "$invite.expires_at < now",
+      "then": [
+        {"method": "throw", "code": "TOKEN_EXPIRED", "message": "This invite has expired", "status": 400}
+      ]
+    },
+    {
+      "method": "conditional",
+      "condition": "$invite.email|lower != $input.email|lower",
+      "then": [
+        {"method": "throw", "code": "EMAIL_MISMATCH", "message": "Email does not match invite", "status": 400}
+      ]
+    },
+    {
+      "comment": "=== CHECK FOR EXISTING USER ==="
+    },
+    {
+      "method": "dbQuery",
+      "table": "users",
+      "filter": {"email": "$input.email|lower"},
+      "output": "existing_users"
+    },
+    {
+      "method": "conditional",
+      "condition": "$existing_users|length > 0",
+      "then": [
+        {"method": "throw", "code": "USER_EXISTS", "message": "An account with this email already exists", "status": 409}
+      ]
+    },
+    {
+      "comment": "=== CREATE USER ==="
+    },
+    {
+      "method": "var",
+      "name": "hashed_password",
+      "value": "$input.password|hash"
+    },
+    {
+      "method": "dbAdd",
+      "table": "users",
+      "data": {
+        "email": "$input.email|lower",
+        "password": "$hashed_password",
+        "role": "$invite.role",
+        "sub_role": "$invite.sub_role",
+        "first_name": "$input.first_name",
+        "last_name": "$input.last_name",
+        "phone": "$input.phone",
+        "status": "active",
+        "email_verified": true,
+        "invited_by_user_id": "$invite.invited_by_user_id",
+        "created_at": "now",
+        "updated_at": "now"
+      },
+      "output": "new_user"
+    },
+    {
+      "comment": "=== CREATE FAMILY RELATIONSHIP IF FAMILY INVITE ==="
+    },
+    {
+      "method": "conditional",
+      "condition": "$invite.role == 'family_member' && $invite.target_user_id != null",
+      "then": [
+        {
+          "method": "dbAdd",
+          "table": "family_relationships",
+          "data": {
+            "student_user_id": "$invite.target_user_id",
+            "family_member_user_id": "$new_user.id",
+            "relationship_type": "$invite.sub_role",
+            "status": "active",
+            "can_view_loans": true,
+            "can_view_payments": true,
+            "can_view_calendar": true,
+            "created_at": "now",
+            "updated_at": "now"
+          },
+          "output": "family_rel"
+        }
+      ]
+    },
+    {
+      "comment": "=== CREATE DEFAULT PRIVACY SETTINGS ==="
+    },
+    {
+      "method": "dbAdd",
+      "table": "privacy_settings",
+      "data": {
+        "user_id": "$new_user.id",
+        "show_profile_public": true,
+        "show_major_public": true,
+        "show_cohort_public": false,
+        "allow_classmate_view": true,
+        "allow_instructor_contact": true,
+        "created_at": "now",
+        "updated_at": "now"
+      },
+      "output": "privacy"
+    },
+    {
+      "comment": "=== MARK INVITE AS ACCEPTED ==="
+    },
+    {
+      "method": "dbEdit",
+      "table": "invites",
+      "filter": {"id": "$invite.id"},
+      "data": {
+        "status": "accepted",
+        "accepted_at": "now"
+      },
+      "output": "updated_invite"
+    },
+    {
+      "comment": "=== CREATE AUTH TOKEN ==="
+    },
+    {
+      "method": "createAuthToken",
+      "table": "users",
+      "user_id": "$new_user.id",
+      "output": "auth_token"
+    },
+    {
+      "comment": "=== BUILD RESPONSE ==="
+    },
+    {
+      "method": "response",
+      "data": {
+        "success": true,
+        "authToken": "$auth_token",
+        "user": {
+          "id": "$new_user.id",
+          "email": "$new_user.email",
+          "role": "$new_user.role",
+          "sub_role": "$new_user.sub_role",
+          "first_name": "$new_user.first_name",
+          "last_name": "$new_user.last_name"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,177 @@
+// ============================================================================
+// WEBHOOK: Webflow Users → Xano Real-Time Sync
+// ============================================================================
+// Endpoint: POST /webhooks/webflow-users
+// Description: Receives Webflow CMS webhooks for Users collection and syncs to Xano
+//
+// SETUP IN XANO:
+// 1. Create new API endpoint: POST /webhooks/webflow-users
+// 2. Paste this code into the function stack
+// 3. Authentication: None (webhook must be publicly accessible)
+//
+// SETUP IN WEBFLOW:
+// 1. Go to Site Settings → Integrations → Webhooks
+// 2. Add webhook URL: https://xerb-qpd6-hd8t.n7.xano.io/api:AUTH/webhooks/webflow-users
+// 3. Select events: collection_item_created, collection_item_changed
+// 4. Filter by collection: Users (6956932cc240cd46605bd66e)
+//
+// MERGE LOGIC:
+// - Only updates empty/null fields in Xano
+// - Existing Xano data is preserved (Xano wins on conflicts)
+// ============================================================================
+
+// ============================================================================
+// 1. EXTRACT WEBHOOK PAYLOAD
+// ============================================================================
+
+var payload $_POST
+var trigger_type $payload.triggerType
+var site_id $payload.site
+var collection_id $payload._cid
+
+// Webflow sends item data in 'payload' for v2 webhooks
+var item_data $payload.payload
+
+// Validate we have item data
+precondition $item_data != null "No item data in webhook payload" 400
+
+// Extract Webflow item ID
+var webflow_id $item_data._id
+precondition $webflow_id != null && $webflow_id != "" "Missing Webflow item ID" 400
+
+// Extract field data
+var field_data $item_data.fieldData
+precondition $field_data != null "No field data in webhook payload" 400
+
+// ============================================================================
+// 2. EXTRACT WEBFLOW FIELDS
+// ============================================================================
+
+// Core fields
+var wf_name $field_data.name
+var wf_slug $field_data.slug
+
+// Parse name into first/last
+var name_parts $wf_name|split:" "
+var wf_first_name $name_parts|first
+var wf_last_name $name_parts|slice:1|join:" "
+
+// Profile fields
+var wf_role $field_data.role
+var wf_visibility $field_data.visibility
+var wf_bio $field_data.bio
+
+// Xano reference field (if user was originally from Xano)
+var wf_xano_id $field_data["xano-user-id"]
+
+// Image field (Webflow sends as object with url property)
+var wf_profile_image $field_data["profile-image"]
+var wf_profile_image_url null
+conditional $wf_profile_image != null && $wf_profile_image.url != null
+  var wf_profile_image_url $wf_profile_image.url
+endConditional
+
+// Draft/Archive status
+var wf_is_draft $item_data._draft
+var wf_is_archived $item_data._archived
+
+// ============================================================================
+// 3. FIND EXISTING USER IN XANO
+// ============================================================================
+
+var existing_user null
+var match_method null
+
+// Method 1: Match by webflow_item_id (most reliable)
+var existing_user users|query|where:"webflow_item_id":$webflow_id|first
+conditional $existing_user != null
+  var match_method "webflow_item_id"
+endConditional
+
+// Method 2: Match by xano-user-id field from Webflow (if user originated from Xano)
+conditional $existing_user == null && $wf_xano_id != null && $wf_xano_id != ""
+  var xano_id_int $wf_xano_id|to_integer
+  var existing_user users|get:$xano_id_int
+  conditional $existing_user != null
+    var match_method "xano_id"
+  endConditional
+endConditional
+
+// Method 3: Match by slug
+conditional $existing_user == null && $wf_slug != null && $wf_slug != ""
+  var existing_user users|query|where:"slug":$wf_slug|first
+  conditional $existing_user != null
+    var match_method "slug"
+  endConditional
+endConditional
+
+// ============================================================================
+// 4. BUILD MERGE DATA (Only update empty fields)
+// ============================================================================
+
+var action "none"
+
+conditional $existing_user != null
+  // ========== UPDATE EXISTING USER (MERGE) ==========
+  var action "updated"
+  var merge_data {updated_at: now}
+
+  // Always update webflow tracking fields
+  var merge_data $merge_data|set:"webflow_item_id":$webflow_id
+
+  // First Name - only if empty in Xano
+  conditional ($existing_user.first_name == null || $existing_user.first_name == "") && $wf_first_name != null
+    var merge_data $merge_data|set:"first_name":$wf_first_name
+  endConditional
+
+  // Last Name - only if empty in Xano
+  conditional ($existing_user.last_name == null || $existing_user.last_name == "") && $wf_last_name != null
+    var merge_data $merge_data|set:"last_name":$wf_last_name
+  endConditional
+
+  // Role - only if empty in Xano
+  conditional ($existing_user.role == null || $existing_user.role == "") && $wf_role != null
+    var merge_data $merge_data|set:"role":$wf_role
+  endConditional
+
+  // Visibility - only if empty in Xano
+  conditional ($existing_user.visibility == null || $existing_user.visibility == "") && $wf_visibility != null
+    var merge_data $merge_data|set:"visibility":$wf_visibility
+  endConditional
+
+  // Bio - only if empty in Xano
+  conditional ($existing_user.bio == null || $existing_user.bio == "") && $wf_bio != null
+    var merge_data $merge_data|set:"bio":$wf_bio
+  endConditional
+
+  // Profile Image - only if empty in Xano
+  conditional ($existing_user.profile_image_url == null || $existing_user.profile_image_url == "") && $wf_profile_image_url != null
+    var merge_data $merge_data|set:"profile_image_url":$wf_profile_image_url
+  endConditional
+
+  // Update the user
+  var updated_user users|edit:$existing_user.id:$merge_data
+  var user_id $existing_user.id
+
+endConditional
+
+conditional $existing_user == null
+  // ========== SKIP - Cannot create users from Webflow ==========
+  // Users must be created via signup (requires email/password)
+  var action "skipped"
+  var user_id null
+endConditional
+
+// ============================================================================
+// 5. RETURN RESPONSE
+// ============================================================================
+
+response {
+  success: true,
+  message: "Webflow user synced to Xano",
+  action: $action,
+  user_id: $user_id,
+  webflow_item_id: $webflow_id,
+  match_method: $match_method,
+  trigger_type: $trigger_type
+}

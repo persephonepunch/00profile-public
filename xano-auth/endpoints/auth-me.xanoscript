@@ -1,0 +1,214 @@
+{
+  "type": "endpoint",
+  "name": "/auth/me",
+  "method": "GET",
+  "description": "Get current authenticated user with permissions and related data",
+  "authentication": "required",
+  "function_stack": [
+    {
+      "method": "requiresAuth"
+    },
+    {
+      "comment": "=== GET USER ==="
+    },
+    {
+      "method": "dbGetSingle",
+      "table": "users",
+      "filter": {"id": "$auth.id"},
+      "output": "user"
+    },
+    {
+      "comment": "=== GET PRIVACY SETTINGS ==="
+    },
+    {
+      "method": "dbGetSingle",
+      "table": "privacy_settings",
+      "filter": {"user_id": "$auth.id"},
+      "output": "privacy"
+    },
+    {
+      "comment": "=== GET COHORTS ==="
+    },
+    {
+      "method": "dbQuery",
+      "table": "user_cohorts",
+      "filter": {"user_id": "$auth.id", "status": "active"},
+      "join": {
+        "table": "cohorts",
+        "on": "user_cohorts.cohort_id = cohorts.id"
+      },
+      "output": "user_cohorts"
+    },
+    {
+      "comment": "=== GET FAMILY RELATIONSHIPS (if student) ==="
+    },
+    {
+      "method": "var",
+      "name": "family_members",
+      "value": "[]"
+    },
+    {
+      "method": "conditional",
+      "condition": "$user.role == 'student'",
+      "then": [
+        {
+          "method": "dbQuery",
+          "table": "family_relationships",
+          "filter": {"student_user_id": "$auth.id", "status": "active"},
+          "join": {
+            "table": "users",
+            "as": "family_user",
+            "on": "family_relationships.family_member_user_id = users.id",
+            "fields": ["id", "first_name", "last_name", "email", "sub_role"]
+          },
+          "output": "family_members"
+        }
+      ]
+    },
+    {
+      "comment": "=== GET LINKED STUDENTS (if family member) ==="
+    },
+    {
+      "method": "var",
+      "name": "linked_students",
+      "value": "[]"
+    },
+    {
+      "method": "conditional",
+      "condition": "$user.role == 'family_member'",
+      "then": [
+        {
+          "method": "dbQuery",
+          "table": "family_relationships",
+          "filter": {"family_member_user_id": "$auth.id", "status": "active"},
+          "join": {
+            "table": "users",
+            "as": "student_user",
+            "on": "family_relationships.student_user_id = users.id",
+            "fields": ["id", "first_name", "last_name", "email", "profile_image_url"]
+          },
+          "output": "linked_students"
+        }
+      ]
+    },
+    {
+      "comment": "=== GET SUPPORT CARDS (if student) ==="
+    },
+    {
+      "method": "var",
+      "name": "support_cards",
+      "value": "[]"
+    },
+    {
+      "method": "conditional",
+      "condition": "$user.role == 'student'",
+      "then": [
+        {
+          "method": "dbQuery",
+          "table": "support_cards",
+          "filter": {"student_user_id": "$auth.id", "is_active": true},
+          "sort": {"display_order": "asc"},
+          "output": "support_cards"
+        }
+      ]
+    },
+    {
+      "comment": "=== BUILD PERMISSIONS OBJECT ==="
+    },
+    {
+      "method": "var",
+      "name": "permissions",
+      "value": "{}"
+    },
+    {
+      "method": "conditional",
+      "condition": "$user.role == 'admin'",
+      "then": [
+        {
+          "method": "var",
+          "name": "permissions",
+          "value": {
+            "can_manage_users": true,
+            "can_manage_cohorts": true,
+            "can_view_all_students": true,
+            "can_invite_all_roles": true,
+            "can_view_financial_data": true
+          }
+        }
+      ]
+    },
+    {
+      "method": "conditional",
+      "condition": "$user.role == 'instructor'",
+      "then": [
+        {
+          "method": "var",
+          "name": "permissions",
+          "value": {
+            "can_view_cohort_students": true,
+            "can_invite_students": true,
+            "can_manage_cohort": true,
+            "can_view_student_work": true
+          }
+        }
+      ]
+    },
+    {
+      "method": "conditional",
+      "condition": "$user.role == 'student'",
+      "then": [
+        {
+          "method": "var",
+          "name": "permissions",
+          "value": {
+            "can_invite_family": true,
+            "can_view_own_loans": true,
+            "can_view_classmates": true,
+            "can_create_support_cards": true,
+            "can_manage_privacy": true
+          }
+        }
+      ]
+    },
+    {
+      "method": "conditional",
+      "condition": "$user.role == 'family_member'",
+      "then": [
+        {
+          "method": "var",
+          "name": "permissions",
+          "value": {
+            "can_view_student_loans": true,
+            "can_view_payment_calendar": true,
+            "can_contribute_to_support_cards": true
+          }
+        }
+      ]
+    },
+    {
+      "comment": "=== BUILD RESPONSE ==="
+    },
+    {
+      "method": "response",
+      "data": {
+        "user": {
+          "id": "$user.id",
+          "email": "$user.email",
+          "role": "$user.role",
+          "sub_role": "$user.sub_role",
+          "first_name": "$user.first_name",
+          "last_name": "$user.last_name",
+          "profile_image_url": "$user.profile_image_url",
+          "phone": "$user.phone",
+          "status": "$user.status"
+        },
+        "permissions": "$permissions",
+        "privacy_settings": "$privacy",
+        "cohorts": "$user_cohorts",
+        "family_members": "$family_members",
+        "linked_students": "$linked_students",
+        "support_cards": "$support_cards"
+      }
+    }
+  ]
+}

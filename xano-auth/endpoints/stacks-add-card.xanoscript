@@ -1,0 +1,126 @@
+{
+  "type": "endpoint",
+  "name": "/stacks/{stack_id}/cards",
+  "method": "POST",
+  "description": "Add a support card to a stack",
+  "authentication": "required",
+  "input": {
+    "stack_id": {"type": "integer", "required": true, "source": "path"},
+    "support_card_id": {"type": "integer", "required": true},
+    "display_order": {"type": "integer", "required": false}
+  },
+  "function_stack": [
+    {
+      "method": "requiresAuth"
+    },
+    {
+      "comment": "Get the stack"
+    },
+    {
+      "method": "dbGetSingle",
+      "table": "card_stacks",
+      "filter": {"id": "$input.stack_id"},
+      "output": "stack"
+    },
+    {
+      "comment": "Check stack ownership"
+    },
+    {
+      "method": "conditional",
+      "condition": "$stack.student_user_id != $auth.id",
+      "then": [
+        {
+          "method": "throw",
+          "code": 403,
+          "message": "You don't have permission to modify this stack"
+        }
+      ]
+    },
+    {
+      "comment": "Get the support card"
+    },
+    {
+      "method": "dbGetSingle",
+      "table": "support_cards",
+      "filter": {"id": "$input.support_card_id"},
+      "output": "card"
+    },
+    {
+      "comment": "Check card ownership"
+    },
+    {
+      "method": "conditional",
+      "condition": "$card.student_user_id != $auth.id",
+      "then": [
+        {
+          "method": "throw",
+          "code": 403,
+          "message": "You can only add your own cards to a stack"
+        }
+      ]
+    },
+    {
+      "comment": "Check if card already in stack"
+    },
+    {
+      "method": "dbGetAll",
+      "table": "stack_cards",
+      "filter": {"stack_id": "$stack.id", "support_card_id": "$card.id"},
+      "output": "existing"
+    },
+    {
+      "method": "conditional",
+      "condition": "$existing|length > 0",
+      "then": [
+        {
+          "method": "throw",
+          "code": 400,
+          "message": "Card is already in this stack"
+        }
+      ]
+    },
+    {
+      "comment": "Get max display order if not provided"
+    },
+    {
+      "method": "conditional",
+      "condition": "$input.display_order == null",
+      "then": [
+        {
+          "method": "dbGetAll",
+          "table": "stack_cards",
+          "filter": {"stack_id": "$stack.id"},
+          "sort": [{"field": "display_order", "direction": "desc"}],
+          "limit": 1,
+          "output": "last_card"
+        },
+        {
+          "method": "var",
+          "name": "input.display_order",
+          "value": "$last_card[0].display_order + 1 ?? 0"
+        }
+      ]
+    },
+    {
+      "comment": "Add card to stack"
+    },
+    {
+      "method": "dbAdd",
+      "table": "stack_cards",
+      "data": {
+        "stack_id": "$stack.id",
+        "support_card_id": "$card.id",
+        "display_order": "$input.display_order"
+      },
+      "output": "stack_card"
+    },
+    {
+      "method": "response",
+      "data": {
+        "success": true,
+        "stack_card": "$stack_card",
+        "card": "$card"
+      }
+    }
+  ]
+}

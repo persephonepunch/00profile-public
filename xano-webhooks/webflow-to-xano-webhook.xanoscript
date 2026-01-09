@@ -1,0 +1,282 @@
+// ============================================================================
+// WEBHOOK: Webflow → Xano Real-Time Sync
+// ============================================================================
+// Endpoint: POST /webhooks/webflow
+// Description: Receives Webflow CMS webhooks and syncs items to Xano
+//
+// SETUP IN XANO:
+// 1. Create new API endpoint: POST /webhooks/webflow
+// 2. Paste this code into the function stack
+// 3. Optional: Add webhook secret for security
+//
+// SETUP IN WEBFLOW:
+// 1. Go to Site Settings → Integrations → Webhooks
+// 2. Add webhook URL: https://xerb-qpd6-hd8t.n7.xano.io/api:pIN2vLYu/webhooks/webflow
+// 3. Select events: collection_item_created, collection_item_changed
+// 4. Filter by collection: Stories (69546a95697458f39f126faa)
+//
+// MERGE LOGIC:
+// - Only updates empty/null fields in Xano
+// - Existing Xano data is preserved (Xano wins on conflicts)
+// ============================================================================
+
+// ============================================================================
+// 1. EXTRACT WEBHOOK PAYLOAD
+// ============================================================================
+
+var payload $_POST
+var trigger_type $payload.triggerType
+var site_id $payload.site
+var collection_id $payload._cid
+
+// Webflow sends item data in 'payload' for v2 webhooks
+var item_data $payload.payload
+
+// Validate we have item data
+precondition $item_data != null "No item data in webhook payload" 400
+
+// Extract Webflow item ID
+var webflow_id $item_data._id
+precondition $webflow_id != null && $webflow_id != "" "Missing Webflow item ID" 400
+
+// Extract field data
+var field_data $item_data.fieldData
+precondition $field_data != null "No field data in webhook payload" 400
+
+// ============================================================================
+// 2. EXTRACT WEBFLOW FIELDS
+// ============================================================================
+
+// Core fields
+var wf_name $field_data.name
+var wf_slug $field_data.slug
+
+// Content fields
+var wf_story_content $field_data["story-content"]
+var wf_excerpt $field_data.excerpt
+
+// Image fields (Webflow sends as object with url property)
+var wf_featured_image $field_data["featured-image"]
+var wf_featured_image_url null
+conditional $wf_featured_image != null && $wf_featured_image.url != null
+  var wf_featured_image_url $wf_featured_image.url
+endConditional
+
+// Author fields
+var wf_author_name $field_data["author-name"]
+var wf_author_email $field_data["author-email"]
+var wf_author_bio $field_data["author-bio"]
+
+var wf_author_image $field_data["author-image"]
+var wf_author_image_url null
+conditional $wf_author_image != null && $wf_author_image.url != null
+  var wf_author_image_url $wf_author_image.url
+endConditional
+
+// Category and meta
+var wf_category $field_data.category
+var wf_featured $field_data.featured
+var wf_read_time $field_data["read-time"]
+var wf_published_date $field_data["published-date"]
+
+// Document/media fields
+var wf_document $field_data["document-file"]
+var wf_document_url null
+conditional $wf_document != null && $wf_document.url != null
+  var wf_document_url $wf_document.url
+endConditional
+
+var wf_video_url $field_data["video-url"]
+
+// Xano reference field (if story was originally from Xano)
+var wf_xano_id $field_data["xano-id"]
+
+// Draft/Archive status
+var wf_is_draft $item_data._draft
+var wf_is_archived $item_data._archived
+
+// ============================================================================
+// 3. FIND EXISTING STORY IN XANO
+// ============================================================================
+
+var existing_story null
+var match_method null
+
+// Method 1: Match by webflow_item_id (most reliable)
+var existing_story stories|query|where:"webflow_item_id":$webflow_id|first
+conditional $existing_story != null
+  var match_method "webflow_item_id"
+endConditional
+
+// Method 2: Match by xano-id field from Webflow (if story originated from Xano)
+conditional $existing_story == null && $wf_xano_id != null && $wf_xano_id != ""
+  var xano_id_int $wf_xano_id|to_integer
+  var existing_story stories|get:$xano_id_int
+  conditional $existing_story != null
+    var match_method "xano_id"
+  endConditional
+endConditional
+
+// Method 3: Match by name + email combination
+conditional $existing_story == null && $wf_name != null && $wf_author_email != null
+  var existing_story stories|query|where:"story_name":$wf_name|where:"story_email":$wf_author_email|first
+  conditional $existing_story != null
+    var match_method "name_email"
+  endConditional
+endConditional
+
+// ============================================================================
+// 4. BUILD MERGE DATA (Only update empty fields)
+// ============================================================================
+
+// Helper function: Check if value is empty
+// Returns true if null, empty string, or "null" string
+
+var action "none"
+
+conditional $existing_story != null
+  // ========== UPDATE EXISTING STORY (MERGE) ==========
+  var action "updated"
+  var merge_data {updated_at: now}
+
+  // Always update webflow tracking fields
+  var merge_data $merge_data|set:"webflow_item_id":$webflow_id
+  var merge_data $merge_data|set:"webflow_synced_at":now
+
+  // Story Name - only if empty in Xano
+  conditional ($existing_story.story_name == null || $existing_story.story_name == "") && $wf_name != null
+    var merge_data $merge_data|set:"story_name":$wf_name
+  endConditional
+
+  // Story Content (body_html) - only if empty in Xano
+  conditional ($existing_story.body_html == null || $existing_story.body_html == "") && $wf_story_content != null
+    var merge_data $merge_data|set:"body_html":$wf_story_content
+    var merge_data $merge_data|set:"story_content_html":$wf_story_content
+  endConditional
+
+  // Excerpt (story_input) - only if empty in Xano
+  conditional ($existing_story.story_input == null || $existing_story.story_input == "") && $wf_excerpt != null
+    var merge_data $merge_data|set:"story_input":$wf_excerpt
+  endConditional
+
+  // Featured Image (uploadcare_url) - only if empty in Xano
+  conditional ($existing_story.uploadcare_url == null || $existing_story.uploadcare_url == "") && $wf_featured_image_url != null
+    var merge_data $merge_data|set:"uploadcare_url":$wf_featured_image_url
+  endConditional
+
+  // Author Name - only if empty in Xano
+  conditional ($existing_story.author_name == null || $existing_story.author_name == "") && $wf_author_name != null
+    var merge_data $merge_data|set:"author_name":$wf_author_name
+  endConditional
+
+  // Author Email (story_email) - only if empty in Xano
+  conditional ($existing_story.story_email == null || $existing_story.story_email == "") && $wf_author_email != null
+    var merge_data $merge_data|set:"story_email":$wf_author_email
+  endConditional
+
+  // Author Bio - only if empty in Xano
+  conditional ($existing_story.author_bio == null || $existing_story.author_bio == "") && $wf_author_bio != null
+    var merge_data $merge_data|set:"author_bio":$wf_author_bio
+  endConditional
+
+  // Author Photo - only if empty in Xano
+  conditional ($existing_story.author_photo == null || $existing_story.author_photo == "") && $wf_author_image_url != null
+    var merge_data $merge_data|set:"author_photo":$wf_author_image_url
+  endConditional
+
+  // Category - only if empty in Xano
+  conditional ($existing_story.category == null || $existing_story.category == "") && $wf_category != null
+    var merge_data $merge_data|set:"category":$wf_category
+  endConditional
+
+  // Featured flag - only if not set (false) in Xano
+  conditional $existing_story.featured != true && $wf_featured == true
+    var merge_data $merge_data|set:"featured":true
+  endConditional
+
+  // Read Time - only if empty/zero in Xano
+  conditional ($existing_story.read_time == null || $existing_story.read_time == 0) && $wf_read_time != null
+    var merge_data $merge_data|set:"read_time":$wf_read_time
+  endConditional
+
+  // Published Date - only if empty in Xano
+  conditional $existing_story.published_date == null && $wf_published_date != null
+    var merge_data $merge_data|set:"published_date":$wf_published_date
+  endConditional
+
+  // Document URL - only if empty in Xano
+  conditional ($existing_story.document_url == null || $existing_story.document_url == "") && $wf_document_url != null
+    var merge_data $merge_data|set:"document_url":$wf_document_url
+  endConditional
+
+  // Video URL - only if empty in Xano
+  conditional ($existing_story.video_url == null || $existing_story.video_url == "") && $wf_video_url != null
+    var merge_data $merge_data|set:"video_url":$wf_video_url
+  endConditional
+
+  // Update the story
+  var updated_story stories|edit:$existing_story.id:$merge_data
+  var story_id $existing_story.id
+
+endConditional
+
+conditional $existing_story == null
+  // ========== CREATE NEW STORY ==========
+  var action "created"
+
+  // Determine status from Webflow draft/archive flags
+  var status "pending"
+  conditional $wf_is_archived == true
+    var status "archived"
+  endConditional
+  conditional $wf_is_draft == true
+    var status "draft"
+  endConditional
+  conditional $wf_is_draft == false && $wf_is_archived == false
+    var status "published"
+  endConditional
+
+  // Build full data for new story
+  var new_data {
+    story_name: $wf_name,
+    story_email: $wf_author_email,
+    story_input: $wf_excerpt,
+    body_html: $wf_story_content,
+    story_content_html: $wf_story_content,
+    author_name: $wf_author_name,
+    author_bio: $wf_author_bio,
+    author_photo: $wf_author_image_url,
+    uploadcare_url: $wf_featured_image_url,
+    category: $wf_category,
+    featured: $wf_featured,
+    read_time: $wf_read_time,
+    published_date: $wf_published_date,
+    document_url: $wf_document_url,
+    video_url: $wf_video_url,
+    status: $status,
+    source: "webflow",
+    webflow_item_id: $webflow_id,
+    webflow_synced_at: now,
+    created_at: now,
+    updated_at: now
+  }
+
+  // Create the story
+  var new_story stories|add:$new_data
+  var story_id $new_story.id
+
+endConditional
+
+// ============================================================================
+// 5. RETURN RESPONSE
+// ============================================================================
+
+response {
+  success: true,
+  message: "Webflow item synced to Xano",
+  action: $action,
+  story_id: $story_id,
+  webflow_item_id: $webflow_id,
+  match_method: $match_method,
+  trigger_type: $trigger_type
+}

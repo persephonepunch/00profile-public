@@ -1,0 +1,211 @@
+// Update Story Endpoint - PUT /stories/{stories_id}
+// Description: Update an existing story with partial or full data
+
+// ========== REQUIRED INPUT ==========
+input stories_id integer
+
+// ========== VALIDATION ==========
+precondition $input.stories_id != null "Story ID is required" 400
+precondition $input.stories_id > 0 "Story ID must be a positive integer" 400
+
+// ========== FETCH EXISTING STORY ==========
+var existing_story stories|get:$input.stories_id
+
+// Check if story exists
+precondition $existing_story != null "Story not found" 404
+
+// ========== GET UPDATE FIELDS FROM REQUEST BODY ==========
+// Original fields
+var story_name $_PUT.story_name
+var story_email $_PUT.story_email
+var story_input $_PUT.story_input
+var story_tags $_PUT.story_tags
+var story_checkbox $_PUT.story_checkbox
+var story_content_html $_PUT.story_content_html
+
+// Uploadcare fields
+var uploadcare_uuid $_PUT.uploadcare_uuid
+var uploadcare_url $_PUT.uploadcare_url
+var uploadcare_file_name $_PUT.uploadcare_file_name
+var uploadcare_file_size $_PUT.uploadcare_file_size
+var uploadcare_mime_type $_PUT.uploadcare_mime_type
+var uploadcare_metadata $_PUT.uploadcare_metadata
+
+// Author profile fields
+var author_bio $_PUT.author_bio
+var author_photo $_PUT.author_photo
+var author_social $_PUT.author_social
+
+// Story metadata fields
+var category $_PUT.category
+var featured $_PUT.featured
+var published_date $_PUT.published_date
+var status $_PUT.status
+
+// Media fields
+var video_url $_PUT.video_url
+var gallery_images $_PUT.gallery_images
+var audio_url $_PUT.audio_url
+
+// ========== BUILD UPDATE OBJECT (only include provided fields) ==========
+var update_data {
+  updated_at: now
+}
+
+// ========== PROCESS ORIGINAL FIELDS ==========
+conditional $story_name != null
+  precondition $story_name != "" "Story name cannot be empty" 400
+  var update_data $update_data|set:"story_name":$story_name
+endConditional
+
+conditional $story_email != null
+  precondition $story_email != "" "Email cannot be empty" 400
+  precondition $story_email|contains:"@" "Valid email address is required" 400
+  var update_data $update_data|set:"story_email":$story_email
+endConditional
+
+conditional $story_input != null
+  var update_data $update_data|set:"story_input":$story_input
+endConditional
+
+conditional $story_tags != null
+  var update_data $update_data|set:"story_tags":$story_tags
+endConditional
+
+conditional $story_checkbox != null
+  var checkbox_bool false
+  conditional $story_checkbox == "true" || $story_checkbox == true
+    var checkbox_bool true
+  endConditional
+  var update_data $update_data|set:"story_checkbox":$checkbox_bool
+endConditional
+
+conditional $story_content_html != null
+  var update_data $update_data|set:"story_content_html":$story_content_html
+endConditional
+
+// ========== PROCESS UPLOADCARE FIELDS ==========
+conditional $uploadcare_uuid != null
+  var update_data $update_data|set:"uploadcare_uuid":$uploadcare_uuid
+endConditional
+
+conditional $uploadcare_url != null
+  var update_data $update_data|set:"uploadcare_url":$uploadcare_url
+endConditional
+
+conditional $uploadcare_file_name != null
+  var update_data $update_data|set:"uploadcare_file_name":$uploadcare_file_name
+endConditional
+
+conditional $uploadcare_file_size != null
+  var update_data $update_data|set:"uploadcare_file_size":$uploadcare_file_size
+endConditional
+
+conditional $uploadcare_mime_type != null
+  var update_data $update_data|set:"uploadcare_mime_type":$uploadcare_mime_type
+endConditional
+
+conditional $uploadcare_metadata != null
+  var update_data $update_data|set:"uploadcare_metadata":$uploadcare_metadata
+endConditional
+
+// ========== PROCESS AUTHOR PROFILE FIELDS ==========
+conditional $author_bio != null
+  var update_data $update_data|set:"author_bio":$author_bio
+endConditional
+
+conditional $author_photo != null
+  var update_data $update_data|set:"author_photo":$author_photo
+endConditional
+
+conditional $author_social != null
+  var update_data $update_data|set:"author_social":$author_social
+endConditional
+
+// ========== PROCESS METADATA FIELDS ==========
+conditional $category != null
+  var update_data $update_data|set:"category":$category
+endConditional
+
+conditional $featured != null
+  var featured_bool false
+  conditional $featured == "true" || $featured == true
+    var featured_bool true
+  endConditional
+  var update_data $update_data|set:"featured":$featured_bool
+endConditional
+
+conditional $status != null
+  // Validate status values
+  precondition $status == "draft" || $status == "pending" || $status == "published" || $status == "archived" "Invalid status value. Must be: draft, pending, published, or archived" 400
+
+  var update_data $update_data|set:"status":$status
+
+  // Set published_date when status changes to published
+  conditional $status == "published" && $existing_story.status != "published"
+    conditional $published_date == null
+      var update_data $update_data|set:"published_date":now
+    endConditional
+  endConditional
+endConditional
+
+conditional $published_date != null
+  var update_data $update_data|set:"published_date":$published_date
+endConditional
+
+// ========== PROCESS MEDIA FIELDS ==========
+conditional $video_url != null
+  conditional $video_url != ""
+    precondition $video_url|startsWith:"http" "Video URL must be a valid URL" 400
+  endConditional
+  var update_data $update_data|set:"video_url":$video_url
+endConditional
+
+conditional $audio_url != null
+  conditional $audio_url != ""
+    precondition $audio_url|startsWith:"http" "Audio URL must be a valid URL" 400
+  endConditional
+  var update_data $update_data|set:"audio_url":$audio_url
+endConditional
+
+conditional $gallery_images != null
+  var update_data $update_data|set:"gallery_images":$gallery_images
+endConditional
+
+// ========== PERFORM UPDATE ==========
+var updated_story stories|edit:$input.stories_id:$update_data
+
+// ========== BUILD RESPONSE ==========
+response {
+  success: true,
+  message: "Story updated successfully",
+  story_id: $updated_story.id,
+  updated_at: $updated_story.updated_at,
+  data: {
+    id: $updated_story.id,
+    story_name: $updated_story.story_name,
+    story_email: $updated_story.story_email,
+    story_input: $updated_story.story_input,
+    story_tags: $updated_story.story_tags,
+    category: $updated_story.category,
+    featured: $updated_story.featured,
+    status: $updated_story.status,
+    view_count: $updated_story.view_count,
+
+    author: {
+      email: $updated_story.story_email,
+      bio: $updated_story.author_bio,
+      photo: $updated_story.author_photo,
+      social: $updated_story.author_social
+    },
+
+    hero_image_url: $updated_story.uploadcare_url,
+    video_url: $updated_story.video_url,
+    audio_url: $updated_story.audio_url,
+    has_gallery: $updated_story.gallery_images != null,
+
+    created_at: $updated_story.created_at,
+    updated_at: $updated_story.updated_at,
+    published_date: $updated_story.published_date
+  }
+}

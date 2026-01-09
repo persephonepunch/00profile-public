@@ -1,0 +1,81 @@
+{
+  "type": "table",
+  "name": "share_links",
+  "description": "Shareable URLs for card stacks (public, unlisted, password, time-limited)",
+  "fields": [
+    {
+      "name": "id",
+      "type": "integer",
+      "primary_key": true,
+      "auto_increment": true
+    },
+    {
+      "name": "stack_id",
+      "type": "integer",
+      "nullable": false,
+      "foreign_key": "card_stacks.id"
+    },
+    {
+      "name": "link_token",
+      "type": "text",
+      "nullable": false,
+      "unique": true,
+      "indexed": true,
+      "description": "UUID for unlisted/password links"
+    },
+    {
+      "name": "link_type",
+      "type": "enum",
+      "values": ["public", "unlisted", "password", "time_limited"],
+      "nullable": false,
+      "default": "unlisted"
+    },
+    {
+      "name": "password_hash",
+      "type": "text",
+      "nullable": true,
+      "description": "Hashed password for password-protected links"
+    },
+    {
+      "name": "expires_at",
+      "type": "timestamp",
+      "nullable": true,
+      "description": "Expiration date for time-limited links"
+    },
+    {
+      "name": "max_views",
+      "type": "integer",
+      "nullable": true,
+      "description": "Max view count before link expires"
+    },
+    {
+      "name": "current_views",
+      "type": "integer",
+      "nullable": false,
+      "default": 0
+    },
+    {
+      "name": "is_active",
+      "type": "boolean",
+      "nullable": false,
+      "default": true
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp",
+      "nullable": false,
+      "default": "now"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "idx_share_links_token",
+      "fields": ["link_token"],
+      "unique": true
+    },
+    {
+      "name": "idx_share_links_stack",
+      "fields": ["stack_id"]
+    }
+  ]
+}

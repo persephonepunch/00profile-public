@@ -1,0 +1,182 @@
+// Story Endpoint with Webflow Sync - v3.0
+// Endpoint: POST /story
+// Syncs to Webflow Stories collection in real-time
+//
+// SETUP REQUIRED:
+// 1. Add environment variables in Xano Settings:
+//    - WEBFLOW_API_TOKEN = b76b1ed9a61bd9d51f75f06c5d2c4e213cbb5c3de1d7fd372f8d604337f65606
+//    - WEBFLOW_COLLECTION_ID = 69546a95697458f39f126faa
+
+// ========== INPUTS (matching your form) ==========
+input story_name text
+input story_email text
+input story_input text
+input story_tags text
+input story_checkbox text
+
+// ========== OPTIONAL INPUTS ==========
+var body_html $_POST.body_html
+var body_text $_POST.body_text
+var category $_POST.category
+var status $_POST.status
+var author_name $_POST.author_name
+var uploadcare_url $_POST.uploadcare_url
+var uploadcare_uuid $_POST.uploadcare_uuid
+
+// ========== VALIDATION ==========
+precondition $input.story_name != "" "Story name is required" 400
+precondition $input.story_email != "" "Email is required" 400
+precondition $input.story_email|contains:"@" "Valid email required" 400
+
+// ========== DEFAULTS ==========
+conditional $status == "" || $status == null
+  var status "draft"
+endConditional
+
+conditional $author_name == "" || $author_name == null
+  var author_name $input.story_email|split:"@"|first
+endConditional
+
+// Convert checkbox to boolean
+var checkbox_bool false
+conditional $input.story_checkbox == "true" || $input.story_checkbox == "on" || $input.story_checkbox == true
+  var checkbox_bool true
+endConditional
+
+// Calculate read time
+var word_count 0
+conditional $body_text != null && $body_text != ""
+  var word_count $body_text|split:" "|count
+endConditional
+var read_time $word_count|divide:200|ceil
+conditional $read_time < 1
+  var read_time 1
+endConditional
+
+// ========== CLEAN EMPTY FIELDS ==========
+conditional $body_html == ""
+  var body_html null
+endConditional
+
+conditional $uploadcare_url == ""
+  var uploadcare_url null
+endConditional
+
+conditional $category == ""
+  var category null
+endConditional
+
+// ========== CREATE RECORD IN XANO ==========
+var new_story stories|add:{
+  story_name: $input.story_name,
+  story_email: $input.story_email,
+  story_input: $input.story_input,
+  story_tags: $input.story_tags,
+  story_checkbox: $checkbox_bool,
+  body_html: $body_html,
+  body_text: $body_text,
+  category: $category,
+  status: $status,
+  author_name: $author_name,
+  uploadcare_url: $uploadcare_url,
+  uploadcare_uuid: $uploadcare_uuid,
+  read_time: $read_time,
+  created_at: now
+}
+
+// ========== SYNC TO WEBFLOW ==========
+var webflow_item_id null
+var webflow_synced false
+
+var webflow_token $env.WEBFLOW_API_TOKEN
+var webflow_collection_id $env.WEBFLOW_COLLECTION_ID
+
+conditional $webflow_token != null && $webflow_token != "" && $webflow_collection_id != null && $webflow_collection_id != ""
+
+  // Generate slug
+  var slug $input.story_name|lowercase|replace:" ":"-"|replace:"[^a-z0-9-]":""|truncate:100
+  var slug $slug ~ "-" ~ $new_story.id
+
+  // Build Webflow fields
+  var webflow_fields {}
+  var webflow_fields $webflow_fields|set:"name":$input.story_name
+  var webflow_fields $webflow_fields|set:"slug":$slug
+  var webflow_fields $webflow_fields|set:"_archived":false
+  var webflow_fields $webflow_fields|set:"_draft":true
+
+  // Xano ID reference
+  var xano_id_str $new_story.id|to_string
+  var webflow_fields $webflow_fields|set:"xano-id":$xano_id_str
+
+  // Story Content (Tiptap HTML)
+  conditional $body_html != null
+    var webflow_fields $webflow_fields|set:"story-content":$body_html
+  endConditional
+
+  // Excerpt
+  conditional $input.story_input != null && $input.story_input != ""
+    var webflow_fields $webflow_fields|set:"excerpt":$input.story_input
+  endConditional
+
+  // Featured Image
+  conditional $uploadcare_url != null
+    var img_obj {}
+    var img_obj $img_obj|set:"url":$uploadcare_url
+    var webflow_fields $webflow_fields|set:"featured-image":$img_obj
+  endConditional
+
+  // Author Name
+  var webflow_fields $webflow_fields|set:"author-name":$author_name
+
+  // Category
+  conditional $category != null && $category != ""
+    var webflow_fields $webflow_fields|set:"category":$category
+  endConditional
+
+  // Read Time
+  var webflow_fields $webflow_fields|set:"read-time":$read_time
+
+  // Build request
+  var request_body {}
+  var request_body $request_body|set:"fieldData":$webflow_fields
+
+  var webflow_url "https://api.webflow.com/v2/collections/" ~ $webflow_collection_id ~ "/items"
+
+  // POST to Webflow
+  var webflow_response external_api_request {
+    url: $webflow_url,
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer " ~ $webflow_token,
+      "Content-Type": "application/json"
+    },
+    body: $request_body
+  }
+
+  // Process response
+  var response_body $webflow_response.response.result
+
+  conditional $response_body != false && $response_body.id != null
+    var webflow_item_id $response_body.id
+    var webflow_synced true
+
+    // Update Xano record with Webflow ID
+    var updated stories|edit:$new_story.id:{
+      webflow_item_id: $response_body.id,
+      webflow_synced_at: now
+    }
+  endConditional
+
+endConditional
+
+// ========== RESPONSE ==========
+response {
+  id: $new_story.id,
+  created_at: $new_story.created_at,
+  story_name: $new_story.story_name,
+  story_email: $new_story.story_email,
+  story_input: $new_story.story_input,
+  story_checkbox: $checkbox_bool,
+  webflow_item_id: $webflow_item_id,
+  webflow_synced: $webflow_synced
+}

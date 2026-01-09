@@ -1,0 +1,81 @@
+// Single Story Endpoint - GET /stories/{stories_id}
+// Description: Retrieve a single story by ID with full details
+
+// ========== INPUT PARAMETERS ==========
+input stories_id integer
+
+// Optional: increment view count
+var increment_views $_GET.increment_views
+
+// ========== VALIDATION ==========
+precondition $input.stories_id != null "Story ID is required" 400
+precondition $input.stories_id > 0 "Story ID must be a positive integer" 400
+
+// ========== FETCH STORY ==========
+var story stories|get:$input.stories_id
+
+// Check if story exists
+precondition $story != null "Story not found" 404
+
+// ========== INCREMENT VIEW COUNT (optional) ==========
+conditional $increment_views == "true" || $increment_views == true
+  var new_view_count $story.view_count + 1
+  var updated stories|edit:$input.stories_id:{
+    view_count: $new_view_count,
+    updated_at: now
+  }
+  var story $updated
+endConditional
+
+// ========== BUILD RESPONSE ==========
+var response_data {
+  id: $story.id,
+  story_name: $story.story_name,
+  story_email: $story.story_email,
+  story_input: $story.story_input,
+  story_content_html: $story.story_content_html,
+  story_tags: $story.story_tags,
+  story_checkbox: $story.story_checkbox,
+
+  // Metadata
+  category: $story.category,
+  featured: $story.featured,
+  status: $story.status,
+  view_count: $story.view_count,
+
+  // Author profile
+  author: {
+    email: $story.story_email,
+    bio: $story.author_bio,
+    photo: $story.author_photo,
+    social: $story.author_social
+  },
+
+  // Hero image (Uploadcare)
+  hero_image: {
+    url: $story.uploadcare_url,
+    uuid: $story.uploadcare_uuid,
+    file_name: $story.uploadcare_file_name,
+    file_size: $story.uploadcare_file_size,
+    mime_type: $story.uploadcare_mime_type,
+    metadata: $story.uploadcare_metadata
+  },
+
+  // Media
+  media: {
+    video_url: $story.video_url,
+    audio_url: $story.audio_url,
+    gallery_images: $story.gallery_images
+  },
+
+  // Timestamps
+  created_at: $story.created_at,
+  updated_at: $story.updated_at,
+  published_date: $story.published_date
+}
+
+// ========== RETURN RESPONSE ==========
+response {
+  success: true,
+  data: $response_data
+}

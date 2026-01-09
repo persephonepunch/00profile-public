@@ -1,0 +1,144 @@
+// ============================================================================
+// WEBHOOK: Sync Single Story to Webflow
+// ============================================================================
+// Endpoint: POST /stories/sync/{story_id}
+// Description: Syncs a specific story to Webflow CMS
+//
+// SETUP IN XANO:
+// 1. Create new API endpoint: POST /stories/sync/{story_id}
+// 2. Add path parameter: story_id (integer)
+// 3. Paste this code into the function stack
+// 4. Set environment variables (see below)
+//
+// ENVIRONMENT VARIABLES REQUIRED:
+//   WEBFLOW_API_TOKEN = your-webflow-api-token
+//   WEBFLOW_COLLECTION_ID = 69546a95697458f39f126faa
+// ============================================================================
+
+// Get story ID from path parameter
+input story_id integer
+
+// Get the story from database
+var story stories|get:$input.story_id
+precondition $story != null "Story not found" 404
+
+// Get Webflow credentials from environment
+var webflow_token $env.WEBFLOW_API_TOKEN
+var webflow_collection_id $env.WEBFLOW_COLLECTION_ID
+
+// Check credentials
+precondition $webflow_token != null && $webflow_token != "" "WEBFLOW_API_TOKEN not configured" 500
+precondition $webflow_collection_id != null && $webflow_collection_id != "" "WEBFLOW_COLLECTION_ID not configured" 500
+
+// Generate slug
+var slug $story.story_name|lowercase|replace:" ":"-"|replace:"[^a-z0-9-]":""|truncate:100
+var slug $slug ~ "-" ~ $story.id
+
+// Build Webflow fields
+var fields {}
+var fields $fields|set:"name":$story.story_name
+var fields $fields|set:"slug":$slug
+var fields $fields|set:"_archived":false
+var fields $fields|set:"_draft":($story.status != "published")
+var fields $fields|set:"xano-id":($story.id|to_string)
+
+// Content
+conditional $story.body_html != null && $story.body_html != ""
+  var fields $fields|set:"story-content":$story.body_html
+endConditional
+conditional ($story.body_html == null || $story.body_html == "") && $story.story_content_html != null
+  var fields $fields|set:"story-content":$story.story_content_html
+endConditional
+
+// Excerpt
+conditional $story.story_input != null && $story.story_input != ""
+  var fields $fields|set:"excerpt":$story.story_input
+endConditional
+
+// Featured Image
+conditional $story.uploadcare_url != null && $story.uploadcare_url != ""
+  var fields $fields|set:"featured-image":{url: $story.uploadcare_url}
+endConditional
+
+// Author Name
+conditional $story.author_name != null && $story.author_name != ""
+  var fields $fields|set:"author-name":$story.author_name
+endConditional
+
+// Author Photo
+conditional $story.author_photo != null && $story.author_photo != ""
+  var fields $fields|set:"author-image":{url: $story.author_photo}
+endConditional
+
+// Document
+conditional $story.document_url != null && $story.document_url != ""
+  var fields $fields|set:"document-file":{url: $story.document_url}
+endConditional
+
+// Category
+conditional $story.category != null && $story.category != ""
+  var fields $fields|set:"category":$story.category
+endConditional
+
+// Read Time
+conditional $story.read_time != null
+  var fields $fields|set:"read-time":$story.read_time
+endConditional
+
+// Determine if update or create
+var existing_id $story.webflow_item_id
+var is_update $existing_id != null && $existing_id != ""
+
+// Build API URL
+var api_url "https://api.webflow.com/v2/collections/" ~ $webflow_collection_id ~ "/items"
+conditional $is_update
+  var api_url $api_url ~ "/" ~ $existing_id
+endConditional
+
+// Make API request
+var method "POST"
+conditional $is_update
+  var method "PATCH"
+endConditional
+
+var response external_api_request {
+  url: $api_url,
+  method: $method,
+  headers: {
+    "Authorization": "Bearer " ~ $webflow_token,
+    "Content-Type": "application/json"
+  },
+  body: {
+    fieldData: $fields
+  }
+}
+
+var result $response.response.result
+
+// Handle success
+conditional $result.id != null
+  // Update story with Webflow ID
+  var updated stories|edit:$story.id:{
+    webflow_item_id: $result.id,
+    webflow_synced_at: now,
+    updated_at: now
+  }
+
+  response {
+    success: true,
+    message: "Story synced to Webflow",
+    story_id: $story.id,
+    webflow_item_id: $result.id,
+    action: $is_update ? "updated" : "created"
+  }
+endConditional
+
+// Handle error
+conditional $result.id == null
+  response {
+    success: false,
+    message: "Webflow sync failed",
+    story_id: $story.id,
+    error: $result
+  } 400
+endConditional

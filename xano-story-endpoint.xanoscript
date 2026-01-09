@@ -1,0 +1,375 @@
+// Story Submission Endpoint - Rebuilt v3.0
+// Endpoint: POST /stories
+// Description: Create story in Xano and sync to Webflow Stories collection
+// Webflow Collection: 69546a95697458f39f126faa
+// Field Mappings:
+//   body_html (Tiptap) -> story-content (RichText)
+//   story_input        -> excerpt (PlainText)
+//   uploadcare_url     -> featured-image (Image)
+//   author_name        -> author-name (PlainText)
+//   author_photo       -> author-image (Image)
+//   category           -> category (Option: opinion,news,feature,review,campus,sports,curriculum,other)
+//   read_time          -> read-time (Number)
+//   published_date     -> published-date (DateTime)
+//   xano_id            -> xano-id (PlainText)
+
+// ========== REQUIRED INPUTS ==========
+input story_name text
+input story_email text
+
+// ========== OPTIONAL: UPDATE MODE ==========
+// If story_id is provided, UPDATE existing record instead of CREATE
+var story_id $_POST.story_id
+var is_update false
+var existing_story null
+
+conditional $story_id != null && $story_id != ""
+  var existing_story stories|get:$story_id
+  conditional $existing_story != null
+    var is_update true
+  endConditional
+endConditional
+
+// ========== OPTIONAL INPUTS ==========
+var body_html $_POST.body_html
+var body_text $_POST.body_text
+var story_input $_POST.story_input
+var story_content_html $_POST.story_content_html
+var category $_POST.category
+var status $_POST.status
+var featured $_POST.featured
+var author_name $_POST.author_name
+var author_bio $_POST.author_bio
+var author_photo $_POST.author_photo
+var uploadcare_url $_POST.uploadcare_url
+var uploadcare_uuid $_POST.uploadcare_uuid
+var document_url $_POST.document_url
+var published_date $_POST.published_date
+var sync_to_webflow $_POST.sync_to_webflow
+
+// ========== NORMALIZE FIELD NAMES ==========
+// story_content_html: prefer 'body_html', fallback to 'story_content_html'
+conditional $body_html == null || $body_html == ""
+  conditional $story_content_html != null && $story_content_html != ""
+    var body_html $story_content_html
+  endConditional
+endConditional
+
+// ========== INPUT VALIDATION ==========
+precondition $input.story_name != "" "Story name is required" 400
+precondition $input.story_email != "" "Email is required" 400
+precondition $input.story_email|contains:"@" "Valid email address is required" 400
+
+// ========== SET DEFAULTS ==========
+conditional $status == "" || $status == null
+  var status "draft"
+endConditional
+
+conditional $sync_to_webflow == null || $sync_to_webflow == ""
+  var sync_to_webflow true
+endConditional
+
+// Default author_name from email if not provided
+conditional $author_name == "" || $author_name == null
+  var author_name $input.story_email|split:"@"|first
+endConditional
+
+// Convert featured to boolean
+var featured_bool false
+conditional $featured == "true" || $featured == true
+  var featured_bool true
+endConditional
+
+// Set published_date when publishing
+conditional $status == "published" && ($published_date == "" || $published_date == null)
+  var published_date now
+endConditional
+
+// ========== CALCULATE READ TIME ==========
+var word_count 0
+conditional $body_text != null && $body_text != ""
+  var word_count $body_text|split:" "|count
+endConditional
+var read_time_minutes $word_count|divide:200|ceil
+conditional $read_time_minutes < 1
+  var read_time_minutes 1
+endConditional
+
+// ========== CLEAN EMPTY FIELDS ==========
+conditional $body_html == ""
+  var body_html null
+endConditional
+
+conditional $story_input == ""
+  var story_input null
+endConditional
+
+conditional $uploadcare_url == ""
+  var uploadcare_url null
+endConditional
+
+conditional $author_photo == ""
+  var author_photo null
+endConditional
+
+conditional $category == ""
+  var category null
+endConditional
+
+conditional $author_bio == ""
+  var author_bio null
+endConditional
+
+conditional $document_url == ""
+  var document_url null
+endConditional
+
+// ========== CREATE OR UPDATE STORY IN XANO DATABASE ==========
+var new_story null
+
+conditional $is_update == true
+  // UPDATE existing story
+  var new_story stories|edit:$story_id:{
+    story_name: $input.story_name,
+    story_email: $input.story_email,
+    story_input: $story_input,
+    story_content_html: $body_html,
+    body_html: $body_html,
+    body_text: $body_text,
+    category: $category,
+    status: $status,
+    featured: $featured_bool,
+    author_name: $author_name,
+    author_bio: $author_bio,
+    author_photo: $author_photo,
+    uploadcare_url: $uploadcare_url,
+    uploadcare_uuid: $uploadcare_uuid,
+    document_url: $document_url,
+    published_date: $published_date,
+    read_time: $read_time_minutes,
+    updated_at: now
+  }
+endConditional
+
+conditional $is_update == false
+  // CREATE new story
+  var new_story stories|add:{
+    story_name: $input.story_name,
+    story_email: $input.story_email,
+    story_input: $story_input,
+    story_content_html: $body_html,
+    body_html: $body_html,
+    body_text: $body_text,
+    category: $category,
+    status: $status,
+    featured: $featured_bool,
+    author_name: $author_name,
+    author_bio: $author_bio,
+    author_photo: $author_photo,
+    uploadcare_url: $uploadcare_url,
+    uploadcare_uuid: $uploadcare_uuid,
+    document_url: $document_url,
+    published_date: $published_date,
+    read_time: $read_time_minutes,
+    view_count: 0,
+    created_at: now,
+    updated_at: now
+  }
+endConditional
+
+// ========== SYNC TO WEBFLOW ==========
+var webflow_result null
+var webflow_item_id null
+
+conditional $sync_to_webflow == "true" || $sync_to_webflow == true
+  var webflow_token $env.WEBFLOW_API_TOKEN
+  var webflow_collection_id $env.WEBFLOW_COLLECTION_ID
+
+  conditional $webflow_token != null && $webflow_token != "" && $webflow_collection_id != null && $webflow_collection_id != ""
+
+    // Generate URL-friendly slug
+    var slug $input.story_name|lowercase|replace:" ":"-"|replace:"[^a-z0-9-]":""|truncate:100
+    var slug $slug ~ "-" ~ $new_story.id
+
+    // Build Webflow fieldData - start with required fields
+    var webflow_fields {}
+    var webflow_fields $webflow_fields|set:"name":$input.story_name
+    var webflow_fields $webflow_fields|set:"slug":$slug
+    var webflow_fields $webflow_fields|set:"_archived":false
+    var webflow_fields $webflow_fields|set:"_draft":($status != "published")
+
+    // Xano ID reference
+    var xano_id_str $new_story.id|to_string
+    var webflow_fields $webflow_fields|set:"xano-id":$xano_id_str
+
+    // Story Content (Tiptap HTML -> story-content RichText)
+    conditional $body_html != null
+      var webflow_fields $webflow_fields|set:"story-content":$body_html
+    endConditional
+
+    // Excerpt
+    conditional $story_input != null
+      var webflow_fields $webflow_fields|set:"excerpt":$story_input
+    endConditional
+
+    // Featured Image (Webflow v2 API uses object with url)
+    conditional $uploadcare_url != null
+      var featured_img {}
+      var featured_img $featured_img|set:"url":$uploadcare_url
+      var webflow_fields $webflow_fields|set:"featured-image":$featured_img
+    endConditional
+
+    // Author Name
+    conditional $author_name != null && $author_name != ""
+      var webflow_fields $webflow_fields|set:"author-name":$author_name
+    endConditional
+
+    // Author Image
+    conditional $author_photo != null
+      var author_img {}
+      var author_img $author_img|set:"url":$author_photo
+      var webflow_fields $webflow_fields|set:"author-image":$author_img
+    endConditional
+
+    // Document File (Word, PPT, PDF)
+    conditional $document_url != null
+      var doc_file {}
+      var doc_file $doc_file|set:"url":$document_url
+      var webflow_fields $webflow_fields|set:"document-file":$doc_file
+    endConditional
+
+    // Category (must match Webflow option: opinion,news,feature,review,campus,sports,curriculum,other)
+    conditional $category != null && $category != ""
+      var webflow_fields $webflow_fields|set:"category":$category
+    endConditional
+
+    // Read Time (integer)
+    var webflow_fields $webflow_fields|set:"read-time":$read_time_minutes
+
+    // Published Date (ISO format)
+    conditional $published_date != null && $published_date != ""
+      var webflow_fields $webflow_fields|set:"published-date":$published_date
+    endConditional
+
+    // Build request body
+    var request_body {}
+    var request_body $request_body|set:"fieldData":$webflow_fields
+
+    // Check if UPDATE or CREATE based on existing webflow_item_id
+    var existing_webflow_id null
+    conditional $is_update == true && $existing_story.webflow_item_id != null && $existing_story.webflow_item_id != ""
+      var existing_webflow_id $existing_story.webflow_item_id
+    endConditional
+
+    // PATCH to update existing, POST to create new
+    conditional $existing_webflow_id != null
+      // UPDATE existing Webflow item
+      var webflow_url "https://api.webflow.com/v2/collections/" ~ $webflow_collection_id ~ "/items/" ~ $existing_webflow_id
+
+      var webflow_response external_api_request {
+        url: $webflow_url,
+        method: "PATCH",
+        headers: {
+          "Authorization": "Bearer " ~ $webflow_token,
+          "Content-Type": "application/json"
+        },
+        body: $request_body
+      }
+    endConditional
+
+    conditional $existing_webflow_id == null
+      // CREATE new Webflow item
+      var webflow_url "https://api.webflow.com/v2/collections/" ~ $webflow_collection_id ~ "/items"
+
+      var webflow_response external_api_request {
+        url: $webflow_url,
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " ~ $webflow_token,
+          "Content-Type": "application/json"
+        },
+        body: $request_body
+      }
+    endConditional
+
+    // Extract response
+    var response_status $webflow_response.response.status
+    var response_body $webflow_response.response.result
+
+    // Check for timeout
+    conditional $response_body == false
+      var webflow_result {
+        success: false,
+        error: "Webflow API timeout or connection error"
+      }
+    endConditional
+
+    // Check for success
+    conditional $response_body != false && $response_body.id != null
+      var webflow_item_id $response_body.id
+
+      // Update Xano record with Webflow ID
+      var updated stories|edit:$new_story.id:{
+        webflow_item_id: $response_body.id,
+        webflow_synced_at: now,
+        updated_at: now
+      }
+
+      var webflow_result {
+        success: true,
+        webflow_item_id: $response_body.id,
+        action: $existing_webflow_id != null ? "updated" : "created",
+        synced_at: now
+      }
+    endConditional
+
+    // Check for API error
+    conditional $response_body != false && $response_body.id == null
+      var webflow_result {
+        success: false,
+        status: $response_status,
+        error: $response_body
+      }
+    endConditional
+
+  endConditional
+
+  // Webflow credentials not configured
+  conditional $webflow_token == null || $webflow_token == "" || $webflow_collection_id == null || $webflow_collection_id == ""
+    var webflow_result {
+      success: false,
+      error: "WEBFLOW_API_TOKEN or WEBFLOW_COLLECTION_ID not configured in Xano environment"
+    }
+  endConditional
+
+endConditional
+
+// ========== RETURN RESPONSE ==========
+var action_message "Story created successfully"
+conditional $is_update == true
+  var action_message "Story updated successfully"
+endConditional
+
+response {
+  success: true,
+  message: $action_message,
+  action: $is_update == true ? "updated" : "created",
+  story_id: $new_story.id,
+  status: $new_story.status,
+  read_time_minutes: $read_time_minutes,
+  webflow_sync: $webflow_result,
+  data: {
+    id: $new_story.id,
+    name: $new_story.story_name,
+    email: $new_story.story_email,
+    author_name: $author_name,
+    excerpt: $new_story.story_input,
+    category: $new_story.category,
+    featured: $new_story.featured,
+    featured_image: $new_story.uploadcare_url,
+    author_photo: $new_story.author_photo,
+    document_url: $new_story.document_url,
+    webflow_item_id: $webflow_item_id,
+    created_at: $new_story.created_at
+  }
+}

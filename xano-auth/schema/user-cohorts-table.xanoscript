@@ -1,0 +1,62 @@
+{
+  "type": "table",
+  "name": "user_cohorts",
+  "description": "Junction table linking users to cohorts",
+  "fields": [
+    {
+      "name": "id",
+      "type": "integer",
+      "primary_key": true,
+      "auto_increment": true
+    },
+    {
+      "name": "user_id",
+      "type": "integer",
+      "nullable": false,
+      "foreign_key": "users.id"
+    },
+    {
+      "name": "cohort_id",
+      "type": "integer",
+      "nullable": false,
+      "foreign_key": "cohorts.id"
+    },
+    {
+      "name": "role_in_cohort",
+      "type": "enum",
+      "values": ["student", "instructor", "teaching_assistant"],
+      "nullable": false,
+      "default": "student"
+    },
+    {
+      "name": "joined_at",
+      "type": "timestamp",
+      "nullable": false,
+      "default": "now"
+    },
+    {
+      "name": "status",
+      "type": "enum",
+      "values": ["active", "withdrawn", "completed"],
+      "nullable": false,
+      "default": "active"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp",
+      "nullable": false,
+      "default": "now"
+    }
+  ],
+  "indexes": [
+    {
+      "name": "idx_user_cohorts_unique",
+      "fields": ["user_id", "cohort_id"],
+      "unique": true
+    },
+    {
+      "name": "idx_user_cohorts_cohort",
+      "fields": ["cohort_id"]
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "type": "endpoint",
+  "name": "/stacks/{stack_id}/cards/{card_id}",
+  "method": "DELETE",
+  "description": "Remove a support card from a stack",
+  "authentication": "required",
+  "input": {
+    "stack_id": {"type": "integer", "required": true, "source": "path"},
+    "card_id": {"type": "integer", "required": true, "source": "path"}
+  },
+  "function_stack": [
+    {
+      "method": "requiresAuth"
+    },
+    {
+      "comment": "Get the stack"
+    },
+    {
+      "method": "dbGetSingle",
+      "table": "card_stacks",
+      "filter": {"id": "$input.stack_id"},
+      "output": "stack"
+    },
+    {
+      "comment": "Check ownership"
+    },
+    {
+      "method": "conditional",
+      "condition": "$stack.student_user_id != $auth.id",
+      "then": [
+        {
+          "method": "throw",
+          "code": 403,
+          "message": "You don't have permission to modify this stack"
+        }
+      ]
+    },
+    {
+      "comment": "Delete the stack_card association"
+    },
+    {
+      "method": "dbDeleteAll",
+      "table": "stack_cards",
+      "filter": {"stack_id": "$stack.id", "support_card_id": "$input.card_id"}
+    },
+    {
+      "method": "response",
+      "data": {
+        "success": true,
+        "message": "Card removed from stack"
+      }
+    }
+  ]
+}

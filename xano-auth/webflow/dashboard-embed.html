@@ -1,0 +1,625 @@
+<!--
+  UNIFIED DASHBOARD EMBED FOR WEBFLOW
+
+  ARCHITECTURE:
+  Instead of 4 separate dashboard pages, use ONE page with role-based sections.
+
+  PAGE URL: /dashboard (auth---required)
+
+  HOW IT WORKS:
+  1. Single /dashboard page checks user role from localStorage
+  2. Shows/hides sections based on role
+  3. Loads role-specific content dynamically
+
+  WEBFLOW SETUP:
+  1. Create single page: /dashboard
+  2. Add class "auth---required" to the page body or main wrapper
+  3. Create sections with role classes (see below)
+  4. Paste this embed at the top of the page
+
+  ROLE CLASSES (add to Webflow elements):
+  - .role---student     → Only visible to students
+  - .role---instructor  → Only visible to instructors
+  - .role---family      → Only visible to family members
+  - .role---admin       → Only visible to admins
+  - .role---sponsor     → Only visible to sponsors
+  - .role---any         → Visible to any logged-in user
+
+  OPTIONAL: Legacy URL redirects
+  If you want /student/dashboard, /admin/dashboard etc. to work,
+  add redirect rules in Webflow or use the redirect script below.
+-->
+
+<div id="dashboard-controller">
+  <!-- Loading State (shown while checking auth) -->
+  <div id="dashboard-loading" class="dashboard-loading">
+    <div class="spinner"></div>
+    <p>Loading your dashboard...</p>
+  </div>
+
+  <!-- Not Authorized State -->
+  <div id="dashboard-unauthorized" class="dashboard-message" style="display: none;">
+    <div class="message-icon">&#128274;</div>
+    <h2>Access Denied</h2>
+    <p>You don't have permission to view this content.</p>
+    <a href="/login" class="action-btn">Login</a>
+  </div>
+</div>
+
+<!-- Dashboard Header (role---any) -->
+<div class="dashboard-header role---any" style="display: none;">
+  <div class="header-content">
+    <div class="user-greeting">
+      <h1>Welcome, <span id="user-name">User</span></h1>
+      <p class="user-role-badge" id="user-role-badge">Student</p>
+    </div>
+    <div class="header-actions">
+      <button id="logout-btn" class="logout-btn">Logout</button>
+    </div>
+  </div>
+</div>
+
+<!-- STUDENT DASHBOARD SECTION -->
+<div class="dashboard-section role---student" style="display: none;">
+  <div class="section-header">
+    <h2>My Stories</h2>
+    <p>View and manage your story submissions</p>
+  </div>
+
+  <div class="dashboard-grid">
+    <div class="dashboard-card">
+      <div class="card-icon">&#128221;</div>
+      <h3>My Stories</h3>
+      <p>View all your submitted stories</p>
+      <a href="/student/stories" class="card-link">View Stories &rarr;</a>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="card-icon">&#10133;</div>
+      <h3>Submit New</h3>
+      <p>Create a new story submission</p>
+      <a href="/student/submit" class="card-link">Start Writing &rarr;</a>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="card-icon">&#128101;</div>
+      <h3>My Family</h3>
+      <p>Manage family connections</p>
+      <a href="/student/family" class="card-link">View Family &rarr;</a>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="card-icon">&#9881;</div>
+      <h3>Settings</h3>
+      <p>Update your profile and preferences</p>
+      <a href="/student/settings" class="card-link">Settings &rarr;</a>
+    </div>
+  </div>
+</div>
+
+<!-- INSTRUCTOR DASHBOARD SECTION -->
+<div class="dashboard-section role---instructor" style="display: none;">
+  <div class="section-header">
+    <h2>Instructor Dashboard</h2>
+    <p>Manage your classes and review student work</p>
+  </div>
+
+  <div class="dashboard-grid">
+    <div class="dashboard-card">
+      <div class="card-icon">&#128218;</div>
+      <h3>My Classes</h3>
+      <p>View and manage your classes</p>
+      <a href="/instructor/classes" class="card-link">View Classes &rarr;</a>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="card-icon">&#128203;</div>
+      <h3>Pending Reviews</h3>
+      <p>Stories awaiting your review</p>
+      <a href="/instructor/reviews" class="card-link">Review Stories &rarr;</a>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="card-icon">&#128200;</div>
+      <h3>Analytics</h3>
+      <p>View class performance metrics</p>
+      <a href="/instructor/analytics" class="card-link">View Analytics &rarr;</a>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="card-icon">&#9881;</div>
+      <h3>Settings</h3>
+      <p>Update your profile</p>
+      <a href="/instructor/settings" class="card-link">Settings &rarr;</a>
+    </div>
+  </div>
+</div>
+
+<!-- FAMILY DASHBOARD SECTION -->
+<div class="dashboard-section role---family" style="display: none;">
+  <div class="section-header">
+    <h2>Family Dashboard</h2>
+    <p>Stay connected with your student's progress</p>
+  </div>
+
+  <div class="dashboard-grid">
+    <div class="dashboard-card">
+      <div class="card-icon">&#128214;</div>
+      <h3>Student Stories</h3>
+      <p>Read stories shared with you</p>
+      <a href="/family/stories" class="card-link">View Stories &rarr;</a>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="card-icon">&#128172;</div>
+      <h3>Messages</h3>
+      <p>Communication from instructors</p>
+      <a href="/family/messages" class="card-link">View Messages &rarr;</a>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="card-icon">&#128197;</div>
+      <h3>Events</h3>
+      <p>Upcoming events and deadlines</p>
+      <a href="/family/events" class="card-link">View Events &rarr;</a>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="card-icon">&#9881;</div>
+      <h3>Settings</h3>
+      <p>Update your profile</p>
+      <a href="/family/settings" class="card-link">Settings &rarr;</a>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN DASHBOARD SECTION -->
+<div class="dashboard-section role---admin" style="display: none;">
+  <div class="section-header">
+    <h2>Admin Dashboard</h2>
+    <p>System administration and user management</p>
+  </div>
+
+  <div class="dashboard-grid">
+    <div class="dashboard-card highlight">
+      <div class="card-icon">&#128101;</div>
+      <h3>User Management</h3>
+      <p>Manage all users and roles</p>
+      <a href="/admin/users" class="card-link">Manage Users &rarr;</a>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="card-icon">&#128231;</div>
+      <h3>Invitations</h3>
+      <p>Send and manage invites</p>
+      <a href="/admin/invites" class="card-link">Manage Invites &rarr;</a>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="card-icon">&#128218;</div>
+      <h3>All Classes</h3>
+      <p>View all classes in system</p>
+      <a href="/admin/classes" class="card-link">View Classes &rarr;</a>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="card-icon">&#128200;</div>
+      <h3>System Analytics</h3>
+      <p>Platform-wide metrics</p>
+      <a href="/admin/analytics" class="card-link">View Analytics &rarr;</a>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="card-icon">&#128221;</div>
+      <h3>All Stories</h3>
+      <p>Browse all submissions</p>
+      <a href="/admin/stories" class="card-link">View Stories &rarr;</a>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="card-icon">&#9881;</div>
+      <h3>System Settings</h3>
+      <p>Configure platform settings</p>
+      <a href="/admin/settings" class="card-link">Settings &rarr;</a>
+    </div>
+  </div>
+</div>
+
+<!-- SPONSOR DASHBOARD SECTION -->
+<div class="dashboard-section role---sponsor" style="display: none;">
+  <div class="section-header">
+    <h2>Sponsor Dashboard</h2>
+    <p>View your sponsored students and impact</p>
+  </div>
+
+  <div class="dashboard-grid">
+    <div class="dashboard-card">
+      <div class="card-icon">&#127873;</div>
+      <h3>My Sponsorships</h3>
+      <p>Students you're supporting</p>
+      <a href="/sponsor/students" class="card-link">View Students &rarr;</a>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="card-icon">&#128200;</div>
+      <h3>Impact Report</h3>
+      <p>See your contribution impact</p>
+      <a href="/sponsor/impact" class="card-link">View Impact &rarr;</a>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="card-icon">&#9881;</div>
+      <h3>Settings</h3>
+      <p>Update your profile</p>
+      <a href="/sponsor/settings" class="card-link">Settings &rarr;</a>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* ====================================
+     DASHBOARD STYLES
+     ==================================== */
+
+  /* Loading State */
+  .dashboard-loading {
+    text-align: center;
+    padding: 80px 20px;
+  }
+
+  .dashboard-loading .spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #e5e7eb;
+    border-top-color: #8B0000;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .dashboard-loading p {
+    color: #6b7280;
+    font-size: 16px;
+  }
+
+  /* Message States */
+  .dashboard-message {
+    text-align: center;
+    padding: 60px 20px;
+    max-width: 400px;
+    margin: 40px auto;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  .message-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+  }
+
+  .dashboard-message h2 {
+    color: #1f2937;
+    font-size: 24px;
+    margin: 0 0 8px 0;
+  }
+
+  .dashboard-message p {
+    color: #6b7280;
+    margin: 0 0 24px 0;
+  }
+
+  .action-btn {
+    display: inline-block;
+    padding: 12px 32px;
+    background: #8B0000;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
+
+  .action-btn:hover {
+    background: #6B0000;
+  }
+
+  /* Dashboard Header */
+  .dashboard-header {
+    background: linear-gradient(135deg, #8B0000 0%, #6B0000 100%);
+    color: white;
+    padding: 32px 24px;
+    margin-bottom: 32px;
+  }
+
+  .header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .user-greeting h1 {
+    font-size: 28px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+  }
+
+  .user-role-badge {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    text-transform: capitalize;
+  }
+
+  .logout-btn {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .logout-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
+
+  /* Dashboard Sections */
+  .dashboard-section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px 48px;
+  }
+
+  .section-header {
+    margin-bottom: 24px;
+  }
+
+  .section-header h2 {
+    font-size: 24px;
+    color: #1f2937;
+    margin: 0 0 4px 0;
+  }
+
+  .section-header p {
+    color: #6b7280;
+    margin: 0;
+  }
+
+  /* Dashboard Grid */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+  }
+
+  .dashboard-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s;
+  }
+
+  .dashboard-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .dashboard-card.highlight {
+    border-color: #8B0000;
+    border-width: 2px;
+  }
+
+  .card-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+  }
+
+  .dashboard-card h3 {
+    font-size: 18px;
+    color: #1f2937;
+    margin: 0 0 8px 0;
+  }
+
+  .dashboard-card p {
+    color: #6b7280;
+    font-size: 14px;
+    margin: 0 0 16px 0;
+    line-height: 1.5;
+  }
+
+  .card-link {
+    color: #8B0000;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .card-link:hover {
+    color: #6B0000;
+    text-decoration: underline;
+  }
+
+  /* Mobile Responsive */
+  @media (max-width: 640px) {
+    .dashboard-header {
+      padding: 24px 16px;
+    }
+
+    .user-greeting h1 {
+      font-size: 22px;
+    }
+
+    .dashboard-section {
+      padding: 0 16px 32px;
+    }
+
+    .dashboard-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+(function() {
+  'use strict';
+
+  // ============================================
+  // CONFIGURATION
+  // ============================================
+  const XANO_API_URL = 'https://xerb-qpd6-hd8t.n7.xano.io/api:hJgoiIwh';
+
+  // Role to display name mapping
+  const ROLE_NAMES = {
+    'student': 'Student',
+    'instructor': 'Instructor',
+    'family_member': 'Family Member',
+    'admin': 'Administrator',
+    'sponsor': 'Sponsor'
+  };
+
+  // Legacy URL redirects (optional)
+  const LEGACY_REDIRECTS = {
+    '/student/dashboard': 'student',
+    '/instructor/dashboard': 'instructor',
+    '/family/dashboard': 'family_member',
+    '/admin/dashboard': 'admin',
+    '/sponsor/dashboard': 'sponsor'
+  };
+  // ============================================
+
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => document.querySelectorAll(s);
+  const show = (el) => { if (el) el.style.display = ''; };
+  const hide = (el) => { if (el) el.style.display = 'none'; };
+
+  // Get user from storage
+  function getUser() {
+    try {
+      const userData = localStorage.getItem('xano_user');
+      return userData ? JSON.parse(userData) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Logout handler
+  function handleLogout() {
+    localStorage.removeItem('xano_auth_token');
+    localStorage.removeItem('xano_user');
+    localStorage.removeItem('xano_permissions');
+    window.location.href = '/login';
+  }
+
+  // Show dashboard for specific role
+  function showDashboard(user) {
+    const role = user.role || 'student';
+
+    // Hide loading
+    hide($('#dashboard-loading'));
+
+    // Update header
+    const userName = $('#user-name');
+    if (userName) {
+      userName.textContent = user.first_name || user.email?.split('@')[0] || 'User';
+    }
+
+    const roleBadge = $('#user-role-badge');
+    if (roleBadge) {
+      roleBadge.textContent = ROLE_NAMES[role] || role;
+    }
+
+    // Show header (role---any)
+    $$('.role---any').forEach(el => show(el));
+
+    // Show role-specific sections
+    const roleClass = role === 'family_member' ? 'role---family' : `role---${role}`;
+    $$(`.${roleClass}`).forEach(el => show(el));
+
+    // Special: Admins can see everything
+    if (role === 'admin') {
+      // Optionally show all sections for admin
+      // $$('.dashboard-section').forEach(el => show(el));
+    }
+
+    // Setup logout button
+    const logoutBtn = $('#logout-btn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', handleLogout);
+    }
+  }
+
+  // Show unauthorized state
+  function showUnauthorized() {
+    hide($('#dashboard-loading'));
+    show($('#dashboard-unauthorized'));
+  }
+
+  // Handle legacy URL redirects
+  function checkLegacyRedirect() {
+    const path = window.location.pathname;
+    const expectedRole = LEGACY_REDIRECTS[path];
+
+    if (expectedRole) {
+      const user = getUser();
+      if (!user) {
+        // Not logged in, redirect to login
+        window.location.href = '/login?redirect=' + encodeURIComponent(path);
+        return true;
+      }
+
+      // Check if user has the expected role
+      if (user.role !== expectedRole) {
+        // Wrong role, redirect to main dashboard
+        window.location.href = '/dashboard';
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  // Initialize
+  function init() {
+    // Check for legacy redirects
+    if (checkLegacyRedirect()) {
+      return;
+    }
+
+    // Get current user
+    const user = getUser();
+
+    if (!user) {
+      // Not logged in
+      window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+      return;
+    }
+
+    // Show appropriate dashboard
+    showDashboard(user);
+  }
+
+  // Start
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>

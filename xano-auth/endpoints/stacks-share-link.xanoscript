@@ -1,0 +1,128 @@
+{
+  "type": "endpoint",
+  "name": "/stacks/{stack_id}/share-link",
+  "method": "POST",
+  "description": "Generate a shareable link for a stack",
+  "authentication": "required",
+  "input": {
+    "stack_id": {"type": "integer", "required": true, "source": "path"},
+    "link_type": {"type": "enum", "values": ["public", "unlisted", "password", "time_limited"], "default": "unlisted"},
+    "password": {"type": "text", "required": false, "description": "Required if link_type is 'password'"},
+    "expires_at": {"type": "timestamp", "required": false, "description": "For time_limited links"},
+    "max_views": {"type": "integer", "required": false, "description": "Max view count before expiration"}
+  },
+  "function_stack": [
+    {
+      "method": "requiresAuth"
+    },
+    {
+      "comment": "Get the stack"
+    },
+    {
+      "method": "dbGetSingle",
+      "table": "card_stacks",
+      "filter": {"id": "$input.stack_id"},
+      "output": "stack"
+    },
+    {
+      "comment": "Check ownership"
+    },
+    {
+      "method": "conditional",
+      "condition": "$stack.student_user_id != $auth.id",
+      "then": [
+        {
+          "method": "throw",
+          "code": 403,
+          "message": "You don't have permission to share this stack"
+        }
+      ]
+    },
+    {
+      "comment": "Validate password requirement"
+    },
+    {
+      "method": "conditional",
+      "condition": "$input.link_type == 'password' && $input.password == null",
+      "then": [
+        {
+          "method": "throw",
+          "code": 400,
+          "message": "Password is required for password-protected links"
+        }
+      ]
+    },
+    {
+      "comment": "Generate unique link token"
+    },
+    {
+      "method": "var",
+      "name": "link_token",
+      "value": "$uuid"
+    },
+    {
+      "comment": "Hash password if provided"
+    },
+    {
+      "method": "var",
+      "name": "password_hash",
+      "value": null
+    },
+    {
+      "method": "conditional",
+      "condition": "$input.password != null",
+      "then": [
+        {
+          "method": "var",
+          "name": "password_hash",
+          "value": "$input.password|hash"
+        }
+      ]
+    },
+    {
+      "comment": "Create share link"
+    },
+    {
+      "method": "dbAdd",
+      "table": "share_links",
+      "data": {
+        "stack_id": "$stack.id",
+        "link_token": "$link_token",
+        "link_type": "$input.link_type",
+        "password_hash": "$password_hash",
+        "expires_at": "$input.expires_at",
+        "max_views": "$input.max_views",
+        "current_views": 0,
+        "is_active": true
+      },
+      "output": "share_link"
+    },
+    {
+      "comment": "Build the full URL"
+    },
+    {
+      "method": "dbGetSingle",
+      "table": "users",
+      "filter": {"id": "$auth.id"},
+      "output": "user"
+    },
+    {
+      "method": "var",
+      "name": "student_slug",
+      "value": "$user.first_name|slugify ~ '-' ~ $user.last_name|slugify"
+    },
+    {
+      "method": "var",
+      "name": "share_url",
+      "value": "'/s/' ~ $student_slug ~ '/' ~ $stack.stack_slug ~ '?t=' ~ $link_token"
+    },
+    {
+      "method": "response",
+      "data": {
+        "success": true,
+        "share_link": "$share_link",
+        "url": "$share_url"
+      }
+    }
+  ]
+}

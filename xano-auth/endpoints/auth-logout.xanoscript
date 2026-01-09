@@ -1,0 +1,22 @@
+{
+  "type": "endpoint",
+  "name": "/auth/logout",
+  "method": "POST",
+  "description": "Logout and revoke auth token",
+  "authentication": "required",
+  "function_stack": [
+    {
+      "method": "requiresAuth"
+    },
+    {
+      "method": "revokeAuthToken"
+    },
+    {
+      "method": "response",
+      "data": {
+        "success": true,
+        "message": "Logged out successfully"
+      }
+    }
+  ]
+}

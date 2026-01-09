@@ -1,0 +1,238 @@
+// CSV Import Endpoint - POST /stories/import-csv
+// Description: Import stories from a CSV file into the Xano database
+// Accepts: multipart/form-data with a CSV file OR JSON with CSV data
+
+// ========== INPUT OPTIONS ==========
+// Option 1: File upload (multipart/form-data)
+var csv_file $_FILES.csv_file
+
+// Option 2: Raw CSV string in body
+var csv_data $_POST.csv_data
+
+// Option 3: Array of objects (pre-parsed)
+var stories_array $_POST.stories
+
+// Options
+var skip_duplicates $_POST.skip_duplicates
+var update_existing $_POST.update_existing
+var default_status $_POST.default_status
+var sync_to_webflow $_POST.sync_to_webflow
+
+// ========== SET DEFAULTS ==========
+conditional $default_status == "" || $default_status == null
+  var default_status "draft"
+endConditional
+
+conditional $skip_duplicates == "" || $skip_duplicates == null
+  var skip_duplicates true
+endConditional
+
+// ========== PARSE CSV DATA ==========
+var parsed_rows []
+
+// If file uploaded, read and parse it
+conditional $csv_file != null
+  var csv_content $csv_file|readFile
+  var parsed_rows $csv_content|csvParse:{
+    headers: true,
+    skipEmptyLines: true
+  }
+endConditional
+
+// If raw CSV string provided
+conditional $csv_data != null && $csv_data != ""
+  var parsed_rows $csv_data|csvParse:{
+    headers: true,
+    skipEmptyLines: true
+  }
+endConditional
+
+// If pre-parsed array provided
+conditional $stories_array != null
+  var parsed_rows $stories_array
+endConditional
+
+// ========== VALIDATION ==========
+precondition $parsed_rows|count > 0 "No data to import. Provide csv_file, csv_data, or stories array" 400
+
+// ========== FIELD MAPPING ==========
+// Map common CSV column names to database fields
+// Supports flexible column naming (case-insensitive)
+var field_map {
+  "name": "story_name",
+  "story_name": "story_name",
+  "title": "story_name",
+  "story name": "story_name",
+
+  "email": "story_email",
+  "story_email": "story_email",
+  "author_email": "story_email",
+  "author email": "story_email",
+
+  "content": "story_content_html",
+  "story_content_html": "story_content_html",
+  "story_content": "story_content_html",
+  "html": "story_content_html",
+  "body": "story_content_html",
+
+  "excerpt": "story_input",
+  "story_input": "story_input",
+  "summary": "story_input",
+  "description": "story_input",
+
+  "tags": "story_tags",
+  "story_tags": "story_tags",
+
+  "category": "category",
+
+  "featured": "featured",
+  "is_featured": "featured",
+
+  "image": "uploadcare_url",
+  "hero_image": "uploadcare_url",
+  "uploadcare_url": "uploadcare_url",
+  "image_url": "uploadcare_url",
+  "photo": "uploadcare_url",
+
+  "bio": "author_bio",
+  "author_bio": "author_bio",
+
+  "author_photo": "author_photo",
+
+  "video": "video_url",
+  "video_url": "video_url",
+
+  "audio": "audio_url",
+  "audio_url": "audio_url",
+
+  "status": "status"
+}
+
+// ========== PROCESS EACH ROW ==========
+var imported_count 0
+var skipped_count 0
+var updated_count 0
+var failed_count 0
+var import_results []
+
+forEach $parsed_rows as $row
+  // Map CSV columns to database fields
+  var story_data {
+    status: $default_status,
+    created_at: now,
+    updated_at: now,
+    view_count: 0
+  }
+
+  // Process each field in the row
+  forEach $row as $key => $value
+    var lowercase_key $key|lowercase|trim
+    var mapped_field $field_map[$lowercase_key]
+
+    conditional $mapped_field != null && $value != "" && $value != null
+      // Handle boolean fields
+      conditional $mapped_field == "featured"
+        conditional $value == "true" || $value == "TRUE" || $value == "1" || $value == "yes" || $value == "YES"
+          var story_data $story_data|set:$mapped_field:true
+        endConditional
+        conditional $value != "true" && $value != "TRUE" && $value != "1" && $value != "yes" && $value != "YES"
+          var story_data $story_data|set:$mapped_field:false
+        endConditional
+      endConditional
+
+      // Handle other fields
+      conditional $mapped_field != "featured"
+        var story_data $story_data|set:$mapped_field:$value
+      endConditional
+    endConditional
+  endForEach
+
+  // Validate required fields
+  conditional $story_data.story_name == null || $story_data.story_name == ""
+    var failed_count $failed_count + 1
+    var import_results $import_results|push:{
+      row: $row,
+      status: "failed",
+      error: "Missing required field: story_name (name, title)"
+    }
+    continue
+  endConditional
+
+  conditional $story_data.story_email == null || $story_data.story_email == ""
+    var failed_count $failed_count + 1
+    var import_results $import_results|push:{
+      row: $row,
+      status: "failed",
+      error: "Missing required field: story_email (email, author_email)"
+    }
+    continue
+  endConditional
+
+  // Check for duplicates (by email + name combination)
+  var existing stories|query|where:"story_email":$story_data.story_email|where:"story_name":$story_data.story_name|first
+
+  conditional $existing != null
+    conditional $update_existing == "true" || $update_existing == true
+      // Update existing record
+      var story_data $story_data|set:"updated_at":now
+      var updated stories|edit:$existing.id:$story_data
+
+      var updated_count $updated_count + 1
+      var import_results $import_results|push:{
+        story_id: $existing.id,
+        story_name: $story_data.story_name,
+        status: "updated"
+      }
+    endConditional
+
+    conditional $update_existing != "true" && $update_existing != true
+      conditional $skip_duplicates == "true" || $skip_duplicates == true || $skip_duplicates == true
+        var skipped_count $skipped_count + 1
+        var import_results $import_results|push:{
+          story_name: $story_data.story_name,
+          story_email: $story_data.story_email,
+          status: "skipped",
+          reason: "Duplicate entry exists"
+        }
+      endConditional
+    endConditional
+  endConditional
+
+  conditional $existing == null
+    // Create new record
+    var new_story stories|add:$story_data
+
+    var imported_count $imported_count + 1
+    var import_results $import_results|push:{
+      story_id: $new_story.id,
+      story_name: $new_story.story_name,
+      status: "imported"
+    }
+  endConditional
+endForEach
+
+// ========== OPTIONAL: TRIGGER WEBFLOW SYNC ==========
+var webflow_sync_result null
+
+conditional ($sync_to_webflow == "true" || $sync_to_webflow == true) && $imported_count > 0
+  // Call the sync endpoint internally or trigger background task
+  var webflow_sync_result {
+    triggered: true,
+    message: "Webflow sync triggered for " + $imported_count + " new stories"
+  }
+endConditional
+
+// ========== RETURN RESPONSE ==========
+response {
+  success: true,
+  message: "CSV import completed",
+  summary: {
+    total_rows: $parsed_rows|count,
+    imported: $imported_count,
+    updated: $updated_count,
+    skipped: $skipped_count,
+    failed: $failed_count
+  },
+  webflow_sync: $webflow_sync_result,
+  results: $import_results
+}

@@ -1,0 +1,98 @@
+{
+  "type": "endpoint",
+  "name": "/stacks/{stack_id}/embed",
+  "method": "GET",
+  "description": "Get embed code and configuration for a stack",
+  "authentication": "required",
+  "input": {
+    "stack_id": {"type": "integer", "required": true, "source": "path"},
+    "theme": {"type": "enum", "values": ["light", "dark", "auto"], "default": "light"},
+    "width": {"type": "integer", "default": 400},
+    "height": {"type": "integer", "default": 600}
+  },
+  "function_stack": [
+    {
+      "method": "requiresAuth"
+    },
+    {
+      "comment": "Get the stack"
+    },
+    {
+      "method": "dbGetSingle",
+      "table": "card_stacks",
+      "filter": {"id": "$input.stack_id"},
+      "output": "stack"
+    },
+    {
+      "comment": "Check ownership"
+    },
+    {
+      "method": "conditional",
+      "condition": "$stack.student_user_id != $auth.id",
+      "then": [
+        {
+          "method": "throw",
+          "code": 403,
+          "message": "You don't have permission to get embed code for this stack"
+        }
+      ]
+    },
+    {
+      "comment": "Get user for slug"
+    },
+    {
+      "method": "dbGetSingle",
+      "table": "users",
+      "filter": {"id": "$auth.id"},
+      "output": "user"
+    },
+    {
+      "method": "var",
+      "name": "student_slug",
+      "value": "$user.first_name|slugify ~ '-' ~ $user.last_name|slugify"
+    },
+    {
+      "comment": "Build embed URLs"
+    },
+    {
+      "method": "var",
+      "name": "base_url",
+      "value": "$env.SITE_URL ?? 'https://yourdomain.com'"
+    },
+    {
+      "method": "var",
+      "name": "embed_url",
+      "value": "$base_url ~ '/embed/' ~ $student_slug ~ '/' ~ $stack.stack_slug"
+    },
+    {
+      "comment": "Generate iframe embed code"
+    },
+    {
+      "method": "var",
+      "name": "iframe_code",
+      "value": "'<iframe src=\"' ~ $embed_url ~ '?theme=' ~ $input.theme ~ '\" width=\"' ~ $input.width ~ '\" height=\"' ~ $input.height ~ '\" frameborder=\"0\" style=\"border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);\"></iframe>'"
+    },
+    {
+      "comment": "Generate JavaScript widget code"
+    },
+    {
+      "method": "var",
+      "name": "widget_code",
+      "value": "'<div id=\"support-cards-' ~ $stack.id ~ '\"></div>\\n<script src=\"' ~ $base_url ~ '/embed.js\" data-stack=\"' ~ $stack.id ~ '\" data-theme=\"' ~ $input.theme ~ '\"></script>'"
+    },
+    {
+      "method": "response",
+      "data": {
+        "stack": "$stack",
+        "embed_url": "$embed_url",
+        "iframe_code": "$iframe_code",
+        "widget_code": "$widget_code",
+        "options": {
+          "theme": "$input.theme",
+          "width": "$input.width",
+          "height": "$input.height"
+        }
+      }
+    }
+  ]
+}

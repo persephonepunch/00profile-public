@@ -1,0 +1,263 @@
+// Story Form Submission Endpoint - POST /stories/submit
+// Description: Receives form submissions from Webflow and syncs to Webflow CMS
+// Form URL: https://usc-profiles.webflow.io/stories
+// Handles both Webflow form fields AND CSV-style fields for compatibility
+
+// ========== FORM FIELDS (from Webflow form) ==========
+// Primary identifiers
+var title $_POST.title
+var author_name $_POST.author_name
+var author_email $_POST.author_email
+
+// Content
+var excerpt $_POST.excerpt
+var body_html $_POST.body_html
+var body_text $_POST.body_text
+var category $_POST.category
+
+// Images (from Uploadcare)
+var featured_image $_POST.featured_image
+var author_image $_POST.author_image
+
+// Documents (Word, PPT, PDF from Uploadcare)
+var document_url $_POST.document_url
+
+// ========== CSV-STYLE FIELDS (for compatibility) ==========
+// These allow the same endpoint to work for CSV imports
+var story_name $_POST.story_name
+var story_email $_POST.story_email
+var story_input $_POST.story_input
+var story_content_html $_POST.story_content_html
+var uploadcare_url $_POST.uploadcare_url
+var author_photo $_POST.author_photo
+
+// Additional fields
+var story_tags $_POST.story_tags
+var featured $_POST.featured
+var status $_POST.status
+var major $_POST.major
+var author_bio $_POST.author_bio
+var author_social $_POST.author_social
+
+// Sync options (default: auto-sync enabled)
+var sync_to_webflow $_POST.sync_to_webflow
+var auto_publish $_POST.auto_publish
+var disable_sync $_POST.disable_sync
+
+// Default to auto-sync unless explicitly disabled
+conditional $sync_to_webflow == null || $sync_to_webflow == ""
+  conditional $disable_sync != "true" && $disable_sync != true
+    var sync_to_webflow true
+  endConditional
+endConditional
+
+// ========== NORMALIZE FIELD NAMES ==========
+// Map Webflow form fields to database fields
+
+// story_name: prefer 'title', fallback to 'story_name', then 'author_name'
+conditional $story_name == null || $story_name == ""
+  conditional $title != null && $title != ""
+    var story_name $title
+  endConditional
+endConditional
+conditional $story_name == null || $story_name == ""
+  conditional $author_name != null && $author_name != ""
+    var story_name $author_name
+  endConditional
+endConditional
+
+// story_email: prefer 'author_email', fallback to 'story_email'
+conditional $story_email == null || $story_email == ""
+  conditional $author_email != null && $author_email != ""
+    var story_email $author_email
+  endConditional
+endConditional
+
+// story_input (excerpt): prefer 'excerpt', fallback to 'story_input', then 'body_text'
+conditional $story_input == null || $story_input == ""
+  conditional $excerpt != null && $excerpt != ""
+    var story_input $excerpt
+  endConditional
+endConditional
+conditional $story_input == null || $story_input == ""
+  conditional $body_text != null && $body_text != ""
+    // Truncate body_text to 500 chars for excerpt
+    var story_input $body_text|truncate:500
+  endConditional
+endConditional
+
+// story_content_html: prefer 'body_html', fallback to 'story_content_html'
+conditional $story_content_html == null || $story_content_html == ""
+  conditional $body_html != null && $body_html != ""
+    var story_content_html $body_html
+  endConditional
+endConditional
+
+// uploadcare_url (hero image): prefer 'featured_image', fallback to 'uploadcare_url'
+conditional $uploadcare_url == null || $uploadcare_url == ""
+  conditional $featured_image != null && $featured_image != ""
+    var uploadcare_url $featured_image
+  endConditional
+endConditional
+
+// author_photo: prefer 'author_image', fallback to 'author_photo'
+conditional $author_photo == null || $author_photo == ""
+  conditional $author_image != null && $author_image != ""
+    var author_photo $author_image
+  endConditional
+endConditional
+
+// category: prefer 'category', fallback to 'major'
+conditional $category == null || $category == ""
+  conditional $major != null && $major != ""
+    var category $major
+  endConditional
+endConditional
+
+// ========== VALIDATION ==========
+precondition $story_name != null && $story_name != "" "Story title/name is required" 400
+precondition $story_email != null && $story_email != "" "Author email is required" 400
+precondition $story_email|contains:"@" "Valid email address is required" 400
+
+// ========== SET DEFAULTS ==========
+conditional $status == null || $status == ""
+  var status "pending"
+endConditional
+
+conditional $featured == null
+  var featured false
+endConditional
+conditional $featured == "true" || $featured == true
+  var featured true
+endConditional
+conditional $featured != true
+  var featured false
+endConditional
+
+// ========== STORE AUTHOR NAME SEPARATELY ==========
+// If author_name is different from title, store it in author_bio or a dedicated field
+conditional $author_name != null && $author_name != "" && $author_name != $title
+  conditional $author_bio == null || $author_bio == ""
+    var author_bio "By " + $author_name
+  endConditional
+endConditional
+
+// ========== CREATE STORY RECORD ==========
+var new_story stories|add:{
+  story_name: $story_name,
+  story_email: $story_email,
+  story_input: $story_input,
+  story_content_html: $story_content_html,
+  story_tags: $story_tags,
+  uploadcare_url: $uploadcare_url,
+  document_url: $document_url,
+  category: $category,
+  featured: $featured,
+  status: $status,
+  author_bio: $author_bio,
+  author_photo: $author_photo,
+  author_social: $author_social,
+  view_count: 0,
+  created_at: now,
+  updated_at: now
+}
+
+// ========== AUTO SYNC TO WEBFLOW (if enabled) ==========
+var webflow_result null
+
+conditional ($sync_to_webflow == "true" || $sync_to_webflow == true || $auto_publish == "true" || $auto_publish == true)
+  var webflow_token $env.WEBFLOW_API_TOKEN
+  var webflow_collection_id $env.WEBFLOW_COLLECTION_ID
+
+  conditional $webflow_token != null && $webflow_collection_id != null
+    // Generate slug
+    var slug $story_name|lowercase|replace:" ":"-"|replace:"[^a-z0-9-]":""|truncate:100
+    var slug $slug + "-" + $new_story.id
+
+    // Build Webflow fields
+    var webflow_fields {
+      name: $story_name,
+      slug: $slug,
+      _archived: false,
+      _draft: $status != "published"
+    }
+
+    conditional $story_content_html != null
+      var webflow_fields $webflow_fields|set:"story-content":$story_content_html
+    endConditional
+    conditional $story_input != null
+      var webflow_fields $webflow_fields|set:"excerpt":$story_input
+    endConditional
+    conditional $story_email != null
+      var webflow_fields $webflow_fields|set:"author-email":$story_email
+    endConditional
+    conditional $uploadcare_url != null
+      var webflow_fields $webflow_fields|set:"featured-image":{url: $uploadcare_url}
+    endConditional
+    conditional $author_photo != null
+      var webflow_fields $webflow_fields|set:"author-image":{url: $author_photo}
+    endConditional
+    conditional $document_url != null && $document_url != ""
+      var webflow_fields $webflow_fields|set:"document-file":{url: $document_url}
+    endConditional
+    conditional $category != null
+      var webflow_fields $webflow_fields|set:"category":$category
+    endConditional
+
+    // Create in Webflow
+    var webflow_url "https://api.webflow.com/v2/collections/" + $webflow_collection_id + "/items"
+
+    var webflow_response http|post:$webflow_url:{
+      headers: {
+        "Authorization": "Bearer " + $webflow_token,
+        "Content-Type": "application/json"
+      },
+      body: {
+        fieldData: $webflow_fields
+      }
+    }
+
+    conditional $webflow_response.id != null
+      // Save Webflow ID back to Xano
+      var updated stories|edit:$new_story.id:{
+        webflow_item_id: $webflow_response.id,
+        webflow_synced_at: now
+      }
+
+      var webflow_result {
+        success: true,
+        webflow_item_id: $webflow_response.id,
+        synced_at: now
+      }
+    endConditional
+
+    conditional $webflow_response.id == null
+      var webflow_result {
+        success: false,
+        error: $webflow_response
+      }
+    endConditional
+  endConditional
+endConditional
+
+// ========== RETURN RESPONSE ==========
+response {
+  success: true,
+  message: "Story submitted successfully",
+  story_id: $new_story.id,
+  story_name: $new_story.story_name,
+  status: $new_story.status,
+  created_at: $new_story.created_at,
+  webflow_sync: $webflow_result,
+  data: {
+    id: $new_story.id,
+    title: $new_story.story_name,
+    author_email: $new_story.story_email,
+    excerpt: $new_story.story_input,
+    category: $new_story.category,
+    featured: $new_story.featured,
+    hero_image: $new_story.uploadcare_url,
+    author_photo: $new_story.author_photo,
+    document_url: $new_story.document_url
+  }
+}
