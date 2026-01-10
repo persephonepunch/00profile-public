@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="code-embed w-embed w-script">
               <script async="" src="https://js.stripe.com/v3/buy-button.js">
 </script>
-              <stripe-buy-button buy-button-id="buy_btn_1SVUwGBZxJbU2KR8mH2l1P0n" publishable-key="pk_live_8tosSyj6NrUl0a7csXx8Ai5g">
+              <stripe-buy-button buy-button-id="buy_btn_1SVUwGBZxJbU2KR8mH2l1P0n" publishable-key="{{ stripe.publishableKey }}">
               </stripe-buy-button>
             </div>
           </div>
@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 4
                 ​
                 5
-                <stripe-buy-button 6="" 7="" 8="" buy-button-id="buy_btn_1SgmfCBZxJbU2KR85XYJM7j6" publishable-key="pk_live_8tosSyj6NrUl0a7csXx8Ai5g">
+                <stripe-buy-button buy-button-id="buy_btn_1SgmfCBZxJbU2KR85XYJM7j6" publishable-key="{{ stripe.publishableKey }}">
                   9
                 </stripe-buy-button>
               </div>
@@ -185,7 +185,7 @@ a {
             <div class="slider_left">
               {%- assign collection = collections.items | sort: "-created-on" -%}<div class="swiper is-content w-dyn-list">
                 {%- unless collection.length == 0 -%}<div role="list" class="swiper-wrapper is-content w-dyn-items">
-                  {%- for item in collection -%}<div role="listitem" class="swiper-slide is-content w-dyn-item">
+                  {%- for item in collection -%}{%- if item.data.slug contains "student-" -%}<div role="listitem" class="swiper-slide is-content w-dyn-item">
                     <div class="slider_info-top">
                       <p class="slider_tagline">{{ item.data.f_major }}</p>
                       <div class="slider_title">
@@ -193,12 +193,12 @@ a {
                       </div>
                       <div class="slider_info-middle">
                         <p class="slider_info-text">{{ item.data.f_quote }}</p>
-                        <a href="{{ item.data.f_dashboard-page }}" class="w-inline-block">
-                          <div class="profile-link-wrap">{{ item.data.f_dashboard-page }}</div>
+                        <a href="/items/{{ item.data.slug }}/" class="w-inline-block">
+                          <div class="profile-link-wrap">View Profile</div>
                         </a>
                       </div>
                     </div>
-                  </div>{%- endfor -%}
+                  </div>{%- endif -%}{%- endfor -%}
                 </div>{%- endunless -%}
                 {%- if collection.length == 0 -%}<div class="w-dyn-empty">
                   <div>{{ texts.3d503d2b }}</div>
@@ -220,9 +220,9 @@ a {
             <div class="slider_right">
               {%- assign collection = collections.items | sort: "-created-on" -%}<div class="swiper is-photos w-dyn-list">
                 {%- unless collection.length == 0 -%}<div role="list" class="swiper-wrapper is-photos w-dyn-items">
-                  {%- for item in collection -%}<div role="listitem" class="swiper-slide is-photos w-dyn-item" style="background-image: url('{{item.data.f_photo.url}}');">
+                  {%- for item in collection -%}{%- if item.data.slug contains "student-" -%}<div role="listitem" class="swiper-slide is-photos w-dyn-item" style="background-image: url('{{item.data.f_photo.url}}');">
                     <div class="slider_height"></div>
-                  </div>{%- endfor -%}
+                  </div>{%- endif -%}{%- endfor -%}
                 </div>{%- endunless -%}
                 {%- if collection.length == 0 -%}<div class="w-dyn-empty">
                   <div>{{ texts.3d503d2b }}</div>
@@ -385,7 +385,7 @@ document.addEventListener("DOMContentLoaded", function () {
           <!-- Webflow Stories from API -->
           <div data-overlap-slider-collection="true" class="overlapping-slider__collection w-dyn-list">
             {%- if webflowStories.size > 0 -%}<div id="collection-slider_list" data-overlap-slider-list="true" role="list" class="overlapping-slider__list w-dyn-items">
-              {%- for item in webflowStories -%}<div data-overlap-slider-item="true" role="listitem" class="overlapping-slider__item w-dyn-item">
+              {%- for item in webflowStories -%}{%- unless item.title contains "Freshmen Gift" or item.title contains "Loyalty Campaign" -%}<div data-overlap-slider-item="true" role="listitem" class="overlapping-slider__item w-dyn-item">
                 <div class="card-wrap">
                   <div class="demo-card-main">
                     <h2 class="demo-card__h">{{ item.excerpt | default: item.title }}</h2>
@@ -400,7 +400,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     </div>
                   </div>
                 </div>
-              </div>{%- endfor -%}
+              </div>{%- endunless -%}{%- endfor -%}
             </div>{%- endif -%}
             {%- if webflowStories.size == 0 -%}
             <!-- Fallback to local stories if Webflow API returns empty -->

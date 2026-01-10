@@ -1,13 +1,13 @@
 ---
 f_photo:
   url: >-
-    https://cdn.prod.website-files.com/69437b612a4e8316713c3947/69464b3dc88a513513dbd100_6943416d3d7eb6a92dcb5f0a_oila_heidi.jpeg
+    https://cdn.prod.website-files.com/69437b612a4e8316713c3947/6961aa0dc08dbe13e7c8d1d5_jaylaswann.jpg
   alt: null
 f_quote: >-
-  Combining law and global strategy From Finland to South Carolina, MIB student
-  Heidi Oila building a career that crosses continents and cultures
+  I wanted to gain international experience in addition to my law degree in
+  Finland, and I was drawn to the strong reputation of the Moore School.
 f_major: Master of International Business
-f_dashboard-page: https://usc-profiles.webflow.io/items/heidi-oila
+f_dashboard-page: https://usc-profiles.webflow.io/items/student-012
 title: Heidi Oila
 slug: heidi-oila
 created-on: '2025-12-18T18:38:22.332Z'

@@ -7,7 +7,7 @@ f_quote: >-
   Building 'a career as an advocate for employees' MHR candidate solidifies hard
   and soft skills while growing her passion for HR
 f_major: Master of Human Resources
-f_dashboard-page: https://usc-profiles.webflow.io/items/erin-mazza
+f_dashboard-page: https://usc-profiles.webflow.io/items/student-011
 title: Erin Mazza
 slug: erin-mazza
 created-on: '2025-12-18T18:37:51.226Z'

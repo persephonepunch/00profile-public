@@ -1,13 +1,13 @@
 ---
 f_photo:
   url: >-
-    https://cdn.prod.website-files.com/69437b612a4e8316713c3947/69464b3eddb0bb1c7868b6e5_694338c690043e22749e50f0_meganmonaghan.jpeg
+    https://cdn.prod.website-files.com/69437b612a4e8316713c3947/6961a9fb7b44da5cc108a098_erincallin.jpg
   alt: null
 f_quote: >-
-  From launching a service organization to exploring the world of AI research
-  Accounting graduate benefits from a well-rounded learning experience
-f_major: Accounting
-f_dashboard-page: https://usc-profiles.webflow.io/items/megan-monaghan
+  Collaboration and adaptability are just as important as technical knowledge.
+  Group projects and real-world problem-solving helped me grow as a teammate and leader.
+f_major: Accounting and Master of Accountancy
+f_dashboard-page: https://usc-profiles.webflow.io/items/student-016
 title: Megan Monaghan
 slug: megan-monaghan
 created-on: '2025-12-18T18:40:38.632Z'
