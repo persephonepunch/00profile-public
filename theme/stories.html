@@ -868,9 +868,30 @@ function initTiptapEditor() {
         Link.configure({
           openOnClick: false,
           autolink: true,
+          protocols: ['https'],
           HTMLAttributes: {
             target: '_blank',
             rel: 'noopener noreferrer'
+          },
+          isAllowedUri: (url, ctx) => {
+            // Run Tiptap's default URL validation first
+            if (!ctx.defaultValidate(url)) return false;
+
+            try {
+              // Whitelist of allowed domains
+              const allowedDomains = ['usc-profiles.webflow.io', 'story-profile.netlify.app'];
+
+              // Ensure URL has a protocol for parsing
+              const parsed = new URL(url, `${ctx.defaultProtocol}://dummy`);
+              const host = parsed.hostname.toLowerCase();
+
+              // Check against whitelist (supports subdomains)
+              return allowedDomains.some(domain =>
+                host === domain || host.endsWith(`.${domain}`)
+              );
+            } catch {
+              return false;
+            }
           }
         }),
         Image.configure({
